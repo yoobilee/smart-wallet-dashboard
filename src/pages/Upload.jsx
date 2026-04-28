@@ -77,7 +77,7 @@ function Upload() {
               <p className="text-xs text-gray-400 mt-0.5">{type.description}</p>
               {/* 업로드된 파일명 표시 */}
               {uploadedFiles[type.key] && (
-                <p className="text-xs text-emerald-600 mt-1">
+                <p className="text-xs text-lime-600 mt-1">
                   ✓ {uploadedFiles[type.key]}
                 </p>
               )}
@@ -94,7 +94,7 @@ function Upload() {
               <span className={`
                 text-xs font-medium px-4 py-2 rounded-xl border transition-colors
                 ${uploadedFiles[type.key]
-                  ? "border-emerald-200 text-emerald-600 bg-emerald-50"
+                  ? "border-lime-200 text-lime-600 bg-lime-50"
                   : "border-gray-200 text-gray-600 hover:border-gray-400"
                 }
               `}>

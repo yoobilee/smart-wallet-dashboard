@@ -18,7 +18,7 @@ const categoryColor = {
   구독:   "bg-purple-100 text-purple-700",
   식비:   "bg-green-100 text-green-700",
   교통:   "bg-cyan-100 text-cyan-700",
-  수입:   "bg-emerald-100 text-emerald-700",
+  수입:   "bg-lime-100 text-emerald-700",
 };
 
 function Transactions() {
@@ -103,7 +103,7 @@ function Transactions() {
                 </div>
 
                 {/* 금액 */}
-                <p className={`text-sm font-semibold ${t.amount > 0 ? "text-emerald-600" : "text-gray-800"}`}>
+                <p className={`text-sm font-semibold ${t.amount > 0 ? "text-lime-600" : "text-gray-800"}`}>
                   {t.amount > 0 ? "+" : ""}{formatKRW(t.amount)}
                 </p>
 

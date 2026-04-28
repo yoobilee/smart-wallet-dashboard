@@ -23,7 +23,7 @@ function Accounts() {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">은행 계좌</h2>
         <div className="space-y-3">
           {accounts.map((acc) => (
-            <div key={acc.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-default border-b border-gray-50 last:border-0">
               <div>
                 {/* 은행명 + 계좌 종류 */}
                 <p className="text-sm font-medium text-gray-800">{acc.bank}</p>
@@ -41,13 +41,13 @@ function Accounts() {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">투자 계좌</h2>
         <div className="space-y-3">
           {investments.map((inv) => (
-            <div key={inv.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div key={inv.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-default border-b border-gray-50 last:border-0">
               <div>
                 <p className="text-sm font-medium text-gray-800">{inv.platform}</p>
                 <p className="text-xs text-gray-400">{inv.type}</p>
               </div>
               {/* 투자 금액은 파란색으로 표시 */}
-              <p className="text-sm font-semibold text-blue-500">{formatKRW(inv.balance)}</p>
+              <p className="text-sm font-semibold text-lime-400">{formatKRW(inv.balance)}</p>
             </div>
           ))}
         </div>
@@ -58,7 +58,7 @@ function Accounts() {
         <h2 className="text-sm font-semibold text-gray-700 mb-4">카드</h2>
         <div className="space-y-3">
           {cards.map((card) => (
-            <div key={card.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+            <div key={card.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-default border-b border-gray-50 last:border-0">
               <div>
                 <p className="text-sm font-medium text-gray-800">{card.company} · {card.name}</p>
                 <p className="text-xs text-gray-400">매월 {card.billingDate}일 결제</p>
