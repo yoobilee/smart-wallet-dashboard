@@ -1,10 +1,9 @@
 // =============================================
 // App.jsx - 전체 레이아웃 관리
-// 사이드바 + 현재 페이지를 나란히 배치
-// activePage 상태에 따라 페이지 전환
+// 다크모드 토글 상태 관리 추가
 // =============================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
@@ -12,10 +11,23 @@ import Transactions from "./pages/Transactions";
 import Upload from "./pages/Upload";
 
 function App() {
-  // activePage: 현재 보여줄 페이지 이름 저장
   const [activePage, setActivePage] = useState("dashboard");
 
-  // activePage 값에 따라 해당 페이지 컴포넌트 반환
+  // 다크모드 상태 (로컬스토리지에 저장해서 새로고침해도 유지)
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  // darkMode 바뀔 때마다 <html> 태그에 dark 클래스 추가/제거
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
+
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":    return <Dashboard />;
@@ -27,12 +39,14 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
 
       {/* 왼쪽 사이드바 */}
       <Sidebar
         activePage={activePage}
-        onNavigate={setActivePage}  // 메뉴 클릭 시 페이지 전환
+        onNavigate={setActivePage}
+        darkMode={darkMode}
+        onToggleDark={() => setDarkMode((prev) => !prev)}
       />
 
       {/* 오른쪽 메인 콘텐츠 영역 */}

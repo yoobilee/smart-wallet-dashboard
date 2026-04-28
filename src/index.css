@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
-/* 전체 폰트를 Inter로 설정 */
+@variant dark (&:where(.dark, .dark *));
+
 * {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+html.dark {
+  background-color: #0a0a0a;
+  color-scheme: dark;
 }
