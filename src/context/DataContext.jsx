@@ -231,6 +231,9 @@ export function DataProvider({ children }) {
       const dateRaw = cols[0] || "";
       const memo = cols[4] || "";
       const amount = parseInt(cols[5]?.replace(/,/g, "") || "0");
+      const installment = parseInt(cols[7] || "1");  // 할부개월 (일시불이면 1)
+      // 할부 건은 월 청구액으로 계산
+      const monthlyAmount = installment > 1 ? Math.round(amount / installment) : amount;
       const status = cols[10] || "";
 
       // 취소 건은 제외
@@ -248,7 +251,7 @@ export function DataProvider({ children }) {
         date: formattedDate,
         description: memo,
         category: categorize(memo, -amount),  // 카드는 항상 지출
-        amount: -amount,  // 카드 지출은 음수로
+        amount: -monthlyAmount,
         type: "카드",
         account: "현대카드",
       };
