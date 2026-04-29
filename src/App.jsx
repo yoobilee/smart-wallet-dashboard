@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
 import Transactions from "./pages/Transactions";
 import Upload from "./pages/Upload";
+import Investments from "./pages/Investments";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -35,6 +36,7 @@ function App() {
       case "accounts":     return <Accounts />;
       case "transactions": return <Transactions />;
       case "upload":       return <Upload />;
+      case "investments": return <Investments />;
       default:             return <Dashboard />;
     }
   };

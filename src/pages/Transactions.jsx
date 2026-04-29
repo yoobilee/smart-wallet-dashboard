@@ -19,6 +19,15 @@ const categoryColor = {
   수입: "bg-lime-100 text-lime-700",
 };
 
+// 은행별 파비콘 URL (Google 파비콘 서비스 사용)
+const bankFavicons = {
+  신한은행:    "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
+  카카오뱅크:  "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
+  토스뱅크:    "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
+  현대카드:    "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
+  NH투자증권:  "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
+};
+
 function Transactions() {
   // DataContext에서 현재 모드에 맞는 거래내역 가져오기
   const { transactions } = useData();
@@ -79,12 +88,21 @@ function Transactions() {
             {filtered.map((t) => (
               <div key={t.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                 <div className="flex items-center gap-3">
+                  {/* 은행 파비콘 */}
+                  {t.account && bankFavicons[t.account] && (
+                    <img
+                      src={bankFavicons[t.account]}
+                      alt={t.account}
+                      className="w-4 h-4 rounded-sm flex-shrink-0"
+                      onError={(e) => e.target.style.display = "none"}  // 로고 못 불러오면 숨김
+                    />
+                  )}
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryColor[t.category] || "bg-gray-100 text-gray-600"}`}>
                     {t.category}
                   </span>
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{t.description}</p>
-                    <p className="text-xs text-gray-400">{t.date} · {t.type}</p>
+                    <p className="text-xs text-gray-400">{t.date} · {t.account} · {t.type}</p>
                   </div>
                 </div>
                 <p className={`text-sm font-semibold ${t.amount > 0 ? "text-lime-600" : "text-gray-800 dark:text-gray-100"}`}>

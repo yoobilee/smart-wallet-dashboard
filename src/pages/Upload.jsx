@@ -1,30 +1,25 @@
 // =============================================
-// Upload 페이지 - CSV 파일 업로드 및 파싱
-// 은행 선택 후 CSV 업로드하면 자동으로 잔액 + 거래내역 파싱
+// Upload 페이지 - CSV 파일 업로드 및 투자 계좌 수동 입력
 // =============================================
 
 import { useState } from "react";
 import { useData } from "../context/DataContext";
 
-// 지원하는 은행 목록
 const bankOptions = [
   { key: "shinhan", label: "신한은행",  available: true  },
-  { key: "kakao",   label: "카카오뱅크", available: false },
-  { key: "toss",    label: "토스뱅크",  available: false },
+  { key: "kakao",   label: "카카오뱅크", available: true  },
+  { key: "toss",    label: "토스뱅크",  available: true  },
+  { key: "hyundai", label: "현대카드",  available: true  },
 ];
 
 function Upload() {
   const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo } = useData();
 
-  // 선택된 은행
   const [selectedBank, setSelectedBank] = useState("shinhan");
-
-  // 업로드된 파일 목록
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  // 파일 선택 시 실행
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -34,25 +29,19 @@ function Upload() {
 
     try {
       let totalParsed = 0;
-
       for (const file of files) {
-        // 선택된 은행 타입으로 파싱
         const { transactions: parsed, balance } = await loadCSVFile(file, selectedBank);
-
-        // 계좌 정보 (은행명 + 잔액)
         const accountInfo = {
           id: selectedBank,
           bank: bankOptions.find((b) => b.key === selectedBank)?.label,
-          type: "입출금",
+          type: selectedBank === "hyundai" ? "카드" : "입출금",
           balance,
           accountNumber: "****-****-****",
         };
-
         addTransactions(parsed, accountInfo);
         totalParsed += parsed.length;
         setUploadedFiles((prev) => [...prev, { name: file.name, bank: selectedBank }]);
       }
-
       setResult({ success: true, count: totalParsed });
     } catch (err) {
       setResult({ success: false, message: "파일을 읽는 중 오류가 발생했어요." });
@@ -87,10 +76,12 @@ function Upload() {
         </p>
       </div>
 
-      {/* 은행 선택 */}
+      {/* 은행/카드 CSV 업로드 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">은행 선택</p>
-        <div className="flex gap-2">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">은행 · 카드 거래내역</p>
+
+        {/* 은행 선택 */}
+        <div className="flex gap-2 flex-wrap">
           {bankOptions.map((bank) => (
             <button
               key={bank.key}
@@ -110,16 +101,6 @@ function Upload() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 업로드 카드 */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-        <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-            {bankOptions.find((b) => b.key === selectedBank)?.label} 거래내역
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">여러 파일을 한꺼번에 선택하면 자동으로 합쳐집니다</p>
-        </div>
 
         {/* 업로드된 파일 목록 */}
         {uploadedFiles.length > 0 && (
@@ -132,31 +113,21 @@ function Upload() {
           </div>
         )}
 
-        {/* 파싱 결과 메시지 */}
+        {/* 파싱 결과 */}
         {result && (
           <p className={`text-xs font-medium ${result.success ? "text-lime-600 dark:text-lime-400" : "text-rose-500"}`}>
-            {result.success
-              ? `✓ ${result.count}건의 거래내역을 불러왔어요.`
-              : result.message
-            }
+            {result.success ? `✓ ${result.count}건의 거래내역을 불러왔어요.` : result.message}
           </p>
         )}
 
         {/* 파일 선택 버튼 */}
         <label className="cursor-pointer inline-block">
-          <input
-            type="file"
-            accept=".csv,.txt"
-            multiple
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isLoading}
-          />
+          <input type="file" accept=".csv,.txt" multiple className="hidden" onChange={handleFileChange} disabled={isLoading} />
           <span className={`
             text-xs font-medium px-4 py-2 rounded-xl border transition-colors inline-block
             ${isLoading
               ? "border-gray-200 text-gray-400 cursor-wait"
-              : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
+              : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400"
             }
           `}>
             {isLoading ? "파일 읽는 중..." : "파일 선택"}
@@ -164,12 +135,9 @@ function Upload() {
         </label>
       </div>
 
-      {/* 더미 데이터로 초기화 버튼 */}
+      {/* 더미 데이터로 초기화 */}
       {!isDemoMode && (
-        <button
-          onClick={resetToDemo}
-          className="text-xs text-gray-400 hover:text-rose-500 transition-colors"
-        >
+        <button onClick={resetToDemo} className="text-xs text-gray-400 hover:text-rose-500 transition-colors">
           더미 데이터로 초기화
         </button>
       )}

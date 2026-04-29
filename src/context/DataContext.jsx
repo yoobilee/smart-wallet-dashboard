@@ -25,7 +25,7 @@ export function DataProvider({ children }) {
 
   // 거래 내용으로 카테고리 자동 분류하는 함수
   const categorize = (description, amount) => {
-    const d = description;
+    const d = description || "";  // undefined 방지
 
     // 수입 (입금)
     if (amount > 0) {
@@ -106,16 +106,143 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // 카카오뱅크 파싱 함수 (추후 구현)
+  // 카카오뱅크 파싱 함수
   const parseKakaoBankCSV = (csvText) => {
-    // TODO: 카카오뱅크 CSV 형식에 맞게 구현 예정
-    return { transactions: [], balance: 0 };
+    const lines = csvText.split("\n").filter((line) => line.trim() !== "");
+
+    // 첫 번째 행은 헤더이므로 제외
+    const dataLines = lines.slice(1);
+
+    let latestBalance = 0;
+
+    const parsed = dataLines.map((line, index) => {
+      const cols = line.trim().split(/\s+/);
+
+      // 카카오뱅크 컬럼 순서:
+      // 0: 거래일시, 1: 구분, 2: 거래금액, 3: 거래후잔액, 4~: 거래내용, 마지막: 거래구분
+      const date = cols[0] || "";
+      const amount = parseInt(cols[2]?.replace(/,/g, "") || "0");
+      const balance = parseInt(cols[3]?.replace(/,/g, "") || "0");
+
+      // 거래내용은 4번째부터 마지막 전까지
+      const memo = cols.slice(4, cols.length - 1).join(" ");
+
+      // 첫 번째 행 잔액을 현재 잔액으로 사용
+      if (index === 0) latestBalance = balance;
+
+      // 날짜 형식 변환 (20260425042121 → 2026-04-25)
+      const formattedDate = date.length >= 8
+        ? `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`
+        : date;
+
+      return {
+        id: `kakao-${index}`,
+        date: formattedDate,
+        description: memo,
+        category: categorize(memo, amount),
+        amount,
+        type: amount > 0 ? "입금" : "출금",
+        account: "카카오뱅크",
+      };
+    }).filter((t) => t.amount !== 0);
+
+    return { transactions: parsed, balance: latestBalance };
   };
 
-  // 토스뱅크 파싱 함수 (추후 구현)
+  // 토스뱅크 파싱 함수 (엑셀 → CSV 저장 형식)
   const parseTossBankCSV = (csvText) => {
-    // TODO: 토스뱅크 CSV 형식에 맞게 구현 예정
-    return { transactions: [], balance: 0 };
+    const lines = csvText.split("\n").filter((line) => line.trim() !== "");
+
+    // 첫 번째 행은 헤더이므로 제외
+    const dataLines = lines.slice(1);
+
+    let latestBalance = 0;
+
+    const parsed = dataLines.map((line, index) => {
+      const cols = line.split(",").map((col) => col.trim().replace(/₩/g, "").replace(/"/g, ""));
+
+      // 토스뱅크 컬럼 순서:
+      // 0: 거래일시, 1: 적요, 2: 거래유형, 3: 거래기관, 4: 계좌번호, 5: 거래금액, 6: 거래후잔액, 7: 메모
+      const date = cols[0] || "";
+      const amount = parseFloat(cols[5]?.replace(/,/g, "").replace(/\s/g, "") || "0");
+      const balance = parseFloat(cols[6]?.replace(/,/g, "").replace(/\s/g, "") || "0");
+      const memo = (cols[7] || cols[1] || "").trim();
+
+      if (index === 0) latestBalance = balance;
+
+      // 날짜 형식 변환 (2026.04.01 05:34:05 → 2026-04-01)
+      const formattedDate = date.slice(0, 10).replace(/\./g, "-");
+
+      return {
+        id: `toss-${index}`,
+        date: formattedDate,
+        description: memo || cols[1],
+        category: categorize(memo || cols[1], amount),
+        amount,
+        type: amount > 0 ? "입금" : "출금",
+        account: "토스뱅크",
+      };
+    }).filter((t) => t.amount !== 0);
+
+    return { transactions: parsed, balance: latestBalance };
+  };
+
+  // 현대카드 파싱 함수 (엑셀 → CSV 저장 형식)
+  const parseHyundaiCardCSV = (csvText) => {
+    const lines = csvText.split("\n").filter((line) => line.trim() !== "");
+
+    // 첫 번째 행은 헤더이므로 제외
+    const dataLines = lines.slice(1);
+
+    const parsed = dataLines.map((line, index) => {
+      // CSV 파싱 - 큰따옴표로 감싸진 필드 처리
+      const cols = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === "," && !inQuotes) {
+          cols.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      cols.push(current.trim());
+
+      // 현대카드 컬럼 순서:
+      // 0: 승인일, 1: 승인시각, 2: 카드구분, 3: 카드종류, 4: 가맹점명
+      // 5: 승인금액, 6: 이용구분, 7: 할부개월, 8: 승인번호, 9: 취소일, 10: 승인구분
+      const dateRaw = cols[0] || "";
+      const memo = cols[4] || "";
+      const amount = parseInt(cols[5]?.replace(/,/g, "") || "0");
+      const status = cols[10] || "";
+
+      // 취소 건은 제외
+      if (status === "취소") return null;
+
+      // 날짜 형식 변환 (2026년 04월 29일 → 2026-04-29)
+      const formattedDate = dateRaw
+        .replace("년 ", "-")
+        .replace("월 ", "-")
+        .replace("일", "")
+        .trim();
+
+      return {
+        id: `hyundai-${index}`,
+        date: formattedDate,
+        description: memo,
+        category: categorize(memo, -amount),  // 카드는 항상 지출
+        amount: -amount,  // 카드 지출은 음수로
+        type: "카드",
+        account: "현대카드",
+      };
+    }).filter((t) => t !== null && t.amount !== 0);
+
+    // 카드는 잔액 개념이 없으므로 balance 0 반환
+    return { transactions: parsed, balance: 0 };
   };
 
   // 은행별 파서 선택
@@ -124,6 +251,7 @@ export function DataProvider({ children }) {
       case "shinhan": return parseShinhanCSV(csvText);
       case "kakao": return parseKakaoBankCSV(csvText);
       case "toss": return parseTossBankCSV(csvText);
+      case "hyundai": return parseHyundaiCardCSV(csvText);
       default: return parseShinhanCSV(csvText);
     }
   };
@@ -169,6 +297,20 @@ export function DataProvider({ children }) {
     setIsDemoMode(false);
   };
 
+  // 투자 계좌 수동 추가
+  const addInvestment = (investmentInfo) => {
+    setRealAccounts((prev) => {
+      const exists = prev.find((acc) => acc.id === investmentInfo.id);
+      if (exists) {
+        return prev.map((acc) =>
+          acc.id === investmentInfo.id ? { ...acc, ...investmentInfo } : acc
+        );
+      }
+      return [...prev, investmentInfo];
+    });
+    setIsDemoMode(false);
+  };
+
   // 더미 데이터로 초기화
   const resetToDemo = () => {
     setRealTransactions([]);
@@ -194,12 +336,13 @@ export function DataProvider({ children }) {
       transactions,
       accounts,
       isDemoMode,
+      loadCSVFile,
+      addTransactions,
+      addInvestment,   // 추가
+      resetToDemo,
       totalBankBalance,
       thisMonthIncome,
       thisMonthExpense,
-      loadCSVFile,
-      addTransactions,
-      resetToDemo,
     }}>
       {children}
     </DataContext.Provider>
