@@ -5,6 +5,7 @@
 // =============================================
 
 import { useState, useEffect } from "react";
+import { useData } from "../context/DataContext";
 
 // 초기 보유 종목 (캡쳐에서 확인한 데이터)
 const initialHoldings = [
@@ -26,12 +27,14 @@ const initialHoldings = [
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
 function Investments() {
-  const [holdings, setHoldings] = useState(() => {
-    // localStorage에 저장된 데이터가 있으면 불러오고, 없으면 초기 데이터 사용
-    const saved = localStorage.getItem("holdings");
-    return saved ? JSON.parse(saved) : initialHoldings;
-  });
-  const [prices, setPrices] = useState({});   // 종목코드 → 현재가
+  const { holdings, setHoldings, prices, setPrices } = useData();
+
+  // holdings가 비어있으면 초기 데이터로 설정
+  useEffect(() => {
+    if (holdings.length === 0) {
+      setHoldings(initialHoldings);
+    }
+  }, []);   // 종목코드 → 현재가
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [editMode, setEditMode] = useState(false);  // 종목 편집 모드
@@ -69,10 +72,6 @@ function Investments() {
   useEffect(() => {
     fetchAllPrices();
   }, []);
-  // holdings 변경될 때마다 localStorage에 저장
-  useEffect(() => {
-    localStorage.setItem("holdings", JSON.stringify(holdings));
-  }, [holdings]);
 
   // 계좌별 그룹화
   const accounts = [...new Set(holdings.map((h) => h.account))];

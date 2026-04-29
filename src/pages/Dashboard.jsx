@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { totalInvestmentBalance as dummyInvestment, totalCardSpending as dummyCardSpending } from "../data/dummyData";
+import { totalCardSpending as dummyCardSpending } from "../data/dummyData";
 import { useData } from "../context/DataContext";
 
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
@@ -19,10 +19,9 @@ const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4
 
 function Dashboard() {
   // DataContext에서 현재 모드에 맞는 거래내역 가져오기
-  const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode } = useData();
+  const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance } = useData();
 
   // 실제 데이터 모드일 때는 투자/카드 더미 데이터 제외
-  const totalInvestmentBalance = isDemoMode ? dummyInvestment : 0;
   const totalCardSpending = isDemoMode ? dummyCardSpending : 0;
   const totalAssets = totalBankBalance + totalInvestmentBalance;
   const availableBalance = totalBankBalance;

@@ -3,7 +3,7 @@
 // CSV로 업로드한 거래내역 + 계좌 잔액을 모든 페이지에서 공유
 // =============================================
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { transactions as dummyTransactions, accounts as dummyAccounts } from "../data/dummyData";
 
 // Context 생성
@@ -18,6 +18,15 @@ export function DataProvider({ children }) {
 
   // 업로드된 계좌 목록 (잔액 포함)
   const [realAccounts, setRealAccounts] = useState([]);
+
+  // 보유 종목 상태 (localStorage에서 불러오기)
+  const [holdings, setHoldings] = useState(() => {
+    const saved = localStorage.getItem("holdings");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // 종목별 현재가 상태
+  const [prices, setPrices] = useState({});
 
   // 현재 모드에 따라 사용할 데이터 반환
   const transactions = isDemoMode ? dummyTransactions : realTransactions;
@@ -165,7 +174,11 @@ export function DataProvider({ children }) {
       // 0: 거래일시, 1: 적요, 2: 거래유형, 3: 거래기관, 4: 계좌번호, 5: 거래금액, 6: 거래후잔액, 7: 메모
       const date = cols[0] || "";
       const amount = parseFloat(cols[5]?.replace(/,/g, "").replace(/\s/g, "") || "0");
-      const balance = parseFloat(cols[6]?.replace(/,/g, "").replace(/\s/g, "") || "0");
+      // 잔액은 cols[6] + cols[7] 합쳐야 함 (쉼표로 쪼개진 경우)
+      const balanceRaw = cols[7] !== undefined && cols[7].match(/^\d+$/)
+        ? cols[6] + cols[7]  // 쪼개진 경우 합치기
+        : cols[6];
+      const balance = parseInt(balanceRaw?.replace(/[^0-9]/g, "") || "0");
       const memo = (cols[7] || cols[1] || "").trim();
 
       if (index === 0) latestBalance = balance;
@@ -331,6 +344,16 @@ export function DataProvider({ children }) {
     .filter((t) => t.amount < 0 && t.category !== "투자" && t.category !== "이체")
     .reduce((sum, t) => sum + t.amount, 0);
 
+  // 총 투자 자산 계산 (보유수량 × 현재가 합계)
+  const totalInvestmentBalance = holdings.reduce(
+    (sum, h) => sum + (prices[h.code] || 0) * h.qty, 0
+  );
+
+  // holdings 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    localStorage.setItem("holdings", JSON.stringify(holdings));
+  }, [holdings]);
+
   return (
     <DataContext.Provider value={{
       transactions,
@@ -338,11 +361,15 @@ export function DataProvider({ children }) {
       isDemoMode,
       loadCSVFile,
       addTransactions,
-      addInvestment,   // 추가
       resetToDemo,
       totalBankBalance,
       thisMonthIncome,
       thisMonthExpense,
+      holdings,
+      setHoldings,
+      prices,
+      setPrices,
+      totalInvestmentBalance,
     }}>
       {children}
     </DataContext.Provider>
