@@ -1,28 +1,32 @@
 // =============================================
 // Upload 페이지 - CSV 파일 업로드 및 파싱
-// 신한은행 CSV 형식 지원
-// 여러 파일 업로드 시 자동으로 합쳐줌
+// 은행 선택 후 CSV 업로드하면 자동으로 잔액 + 거래내역 파싱
 // =============================================
 
 import { useState } from "react";
 import { useData } from "../context/DataContext";
 
-const uploadTypes = [
-  { key: "bank", label: "은행 거래내역", description: "신한은행 CSV (거래일자, 거래시간, 적요, 출금, 입금, 내용, 잔액, 거래점)" },
+// 지원하는 은행 목록
+const bankOptions = [
+  { key: "shinhan", label: "신한은행",  available: true  },
+  { key: "kakao",   label: "카카오뱅크", available: false },
+  { key: "toss",    label: "토스뱅크",  available: false },
 ];
 
 function Upload() {
-  // DataContext에서 필요한 함수 가져오기
   const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo } = useData();
 
-  // 업로드 상태 관리
+  // 선택된 은행
+  const [selectedBank, setSelectedBank] = useState("shinhan");
+
+  // 업로드된 파일 목록
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(null);  // 파싱 결과 메시지
+  const [result, setResult] = useState(null);
 
   // 파일 선택 시 실행
   const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);  // 여러 파일 선택 가능
+    const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
     setIsLoading(true);
@@ -31,15 +35,24 @@ function Upload() {
     try {
       let totalParsed = 0;
 
-      // 선택된 파일들 순서대로 파싱
       for (const file of files) {
-        const parsed = await loadCSVFile(file);
-        addTransactions(parsed);
+        // 선택된 은행 타입으로 파싱
+        const { transactions: parsed, balance } = await loadCSVFile(file, selectedBank);
+
+        // 계좌 정보 (은행명 + 잔액)
+        const accountInfo = {
+          id: selectedBank,
+          bank: bankOptions.find((b) => b.key === selectedBank)?.label,
+          type: "입출금",
+          balance,
+          accountNumber: "****-****-****",
+        };
+
+        addTransactions(parsed, accountInfo);
         totalParsed += parsed.length;
-        setUploadedFiles((prev) => [...prev, file.name]);
+        setUploadedFiles((prev) => [...prev, { name: file.name, bank: selectedBank }]);
       }
 
-      // 파싱 결과 메시지
       setResult({ success: true, count: totalParsed });
     } catch (err) {
       setResult({ success: false, message: "파일을 읽는 중 오류가 발생했어요." });
@@ -74,18 +87,47 @@ function Upload() {
         </p>
       </div>
 
+      {/* 은행 선택 */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">은행 선택</p>
+        <div className="flex gap-2">
+          {bankOptions.map((bank) => (
+            <button
+              key={bank.key}
+              onClick={() => bank.available && setSelectedBank(bank.key)}
+              className={`
+                px-4 py-2 rounded-xl text-sm font-medium border transition-colors
+                ${!bank.available
+                  ? "border-gray-100 dark:border-gray-800 text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  : selectedBank === bank.key
+                    ? "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 border-transparent"
+                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400"
+                }
+              `}
+            >
+              {bank.label}
+              {!bank.available && <span className="ml-1 text-xs">(준비중)</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* 업로드 카드 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
         <div>
-          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">신한은행 거래내역</p>
-          <p className="text-xs text-gray-400 mt-0.5">여러 파일을 한꺼번에 선택하면 자동으로 합쳐줍니다</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+            {bankOptions.find((b) => b.key === selectedBank)?.label} 거래내역
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5">여러 파일을 한꺼번에 선택하면 자동으로 합쳐집니다</p>
         </div>
 
         {/* 업로드된 파일 목록 */}
         {uploadedFiles.length > 0 && (
           <div className="space-y-1">
-            {uploadedFiles.map((name, i) => (
-              <p key={i} className="text-xs text-lime-600 dark:text-lime-400">✓ {name}</p>
+            {uploadedFiles.map((f, i) => (
+              <p key={i} className="text-xs text-lime-600 dark:text-lime-400">
+                ✓ {f.name} ({bankOptions.find((b) => b.key === f.bank)?.label})
+              </p>
             ))}
           </div>
         )}
@@ -105,7 +147,7 @@ function Upload() {
           <input
             type="file"
             accept=".csv,.txt"
-            multiple  // 여러 파일 선택 가능
+            multiple
             className="hidden"
             onChange={handleFileChange}
             disabled={isLoading}
@@ -117,7 +159,7 @@ function Upload() {
               : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
             }
           `}>
-            {isLoading ? "파일 읽는 중..." : "CSV 파일 선택"}
+            {isLoading ? "파일 읽는 중..." : "파일 선택"}
           </span>
         </label>
       </div>

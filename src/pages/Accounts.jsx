@@ -3,11 +3,14 @@
 // 다크모드 적용
 // =============================================
 
-import { accounts, investments, cards } from "../data/dummyData";
+import { investments, cards } from "../data/dummyData";
+import { useData } from "../context/DataContext";
 
 const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 function Accounts() {
+  // DataContext에서 현재 모드에 맞는 계좌 정보 가져오기
+  const { accounts } = useData();
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
 
