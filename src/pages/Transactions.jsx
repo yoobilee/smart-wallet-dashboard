@@ -4,22 +4,24 @@
 // =============================================
 
 import { useState } from "react";
-import { transactions } from "../data/dummyData";
+import { useData } from "../context/DataContext";
 
 const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
-  카페:   "bg-amber-100 text-amber-600",
-  쇼핑:   "bg-pink-100 text-pink-600",
+  카페: "bg-amber-100 text-amber-600",
+  쇼핑: "bg-pink-100 text-pink-600",
   편의점: "bg-orange-100 text-orange-600",
-  투자:   "bg-lime-100 text-lime-600",
-  구독:   "bg-purple-100 text-purple-600",
-  식비:   "bg-green-100 text-green-600",
-  교통:   "bg-cyan-100 text-cyan-600",
-  수입:   "bg-lime-100 text-lime-700",
+  투자: "bg-lime-100 text-lime-600",
+  구독: "bg-purple-100 text-purple-600",
+  식비: "bg-green-100 text-green-600",
+  교통: "bg-cyan-100 text-cyan-600",
+  수입: "bg-lime-100 text-lime-700",
 };
 
 function Transactions() {
+  // DataContext에서 현재 모드에 맞는 거래내역 가져오기
+  const { transactions } = useData();
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
 

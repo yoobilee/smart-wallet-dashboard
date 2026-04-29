@@ -6,8 +6,8 @@ import {
   thisMonthIncome,
   thisMonthExpense,
   totalCardSpending,
-  transactions,
 } from "../data/dummyData";
+import { useData } from "../context/DataContext";
 
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
@@ -24,16 +24,20 @@ const categoryColor = {
 
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24"];
 
-const categoryData = Object.entries(
-  transactions
-    .filter((t) => t.amount < 0 && t.category !== "투자")
-    .reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
-      return acc;
-    }, {})
-).map(([name, value]) => ({ name, value }));
-
 function Dashboard() {
+  // DataContext에서 현재 모드에 맞는 거래내역 가져오기
+  const { transactions } = useData();
+
+  // 카테고리별 지출 합계 계산 (여기로 이동!)
+  const categoryData = Object.entries(
+    transactions
+      .filter((t) => t.amount < 0 && t.category !== "투자")
+      .reduce((acc, t) => {
+        acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
+        return acc;
+      }, {})
+  ).map(([name, value]) => ({ name, value }));
+
   const recentTransactions = transactions.slice(0, 5);
   const investmentRatio = (totalInvestmentBalance / totalAssets) * 100;
 
@@ -94,7 +98,6 @@ function Dashboard() {
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">지출 카테고리</h2>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              // 후
               <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={3} stroke="none">
                 {categoryData.map((entry, index) => (
                   <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />

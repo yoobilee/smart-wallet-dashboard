@@ -1,9 +1,10 @@
 // =============================================
 // App.jsx - 전체 레이아웃 관리
-// 다크모드 토글 상태 관리 추가
+// DataProvider로 전역 데이터 상태 감싸기
 // =============================================
 
 import { useState, useEffect } from "react";
+import { DataProvider } from "./context/DataContext";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
@@ -39,22 +40,25 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+    // DataProvider로 전체 앱을 감싸서 모든 페이지에서 데이터 접근 가능
+    <DataProvider>
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
 
-      {/* 왼쪽 사이드바 */}
-      <Sidebar
-        activePage={activePage}
-        onNavigate={setActivePage}
-        darkMode={darkMode}
-        onToggleDark={() => setDarkMode((prev) => !prev)}
-      />
+        {/* 왼쪽 사이드바 */}
+        <Sidebar
+          activePage={activePage}
+          onNavigate={setActivePage}
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode((prev) => !prev)}
+        />
 
-      {/* 오른쪽 메인 콘텐츠 영역 */}
-      <main className="flex-1 overflow-y-auto">
-        {renderPage()}
-      </main>
+        {/* 오른쪽 메인 콘텐츠 영역 */}
+        <main className="flex-1 overflow-y-auto">
+          {renderPage()}
+        </main>
 
-    </div>
+      </div>
+    </DataProvider>
   );
 }
 
