@@ -9,7 +9,7 @@ const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 function Accounts() {
   // DataContext에서 현재 모드에 맞는 계좌 정보 가져오기
-  const { accounts, holdings, prices, transactions } = useData();
+  const { accounts, holdings, prices, transactions, cashBalance } = useData();
 
   // 계좌별 투자 총액 계산
   const accountTotals = holdings.reduce((acc, h) => {
@@ -18,11 +18,14 @@ function Accounts() {
     return acc;
   }, {});
 
-  // 투자 계좌 목록 (계좌명 중복 제거)
+  // 투자 계좌 목록 (계좌명 중복 제거) + 예수금 포함
   const investmentAccounts = [...new Set(holdings.map((h) => h.account))].map((name) => ({
     id: name,
     platform: name,
-    balance: accountTotals[name] || 0,
+    balance: (accountTotals[name] || 0) + (
+      name === "NH CMA" ? cashBalance.cma :
+        name === "NH ISA" ? cashBalance.isa : 0
+    ),
   }));
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">

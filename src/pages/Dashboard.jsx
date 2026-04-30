@@ -22,6 +22,9 @@ const categoryColor = {
   수입: "bg-lime-100 text-lime-700",
   이체: "bg-gray-100 text-gray-500",
   의료: "bg-red-100 text-red-500",
+  기타: "bg-gray-100 text-gray-500",
+  생활: "bg-teal-100 text-teal-600",
+  지출이체: "bg-orange-100 text-orange-600",
 };
 
 const bankFavicons = {
@@ -148,7 +151,7 @@ function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => [formatKRW(value), "지출"]}
+                    formatter={(value, name, props) => [formatKRW(value), props.payload.name]}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #1f2937", backgroundColor: "#111827", color: "#fff", fontSize: "12px" }}
                   />
                 </PieChart>

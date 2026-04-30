@@ -1,6 +1,6 @@
 // =============================================
 // Transactions 페이지 - 전체 거래 내역
-// 미니멀 필터 UI - 검색 + 정렬/개수 한 줄, 카테고리 한 줄
+// 미니멀 필터 UI - 검색/정렬/개수 한 줄, 필터 한 줄
 // =============================================
 
 import { useState, useMemo, useRef, useEffect } from "react";
@@ -20,6 +20,9 @@ const categoryColor = {
   수입:   "bg-lime-100 text-lime-700",
   이체:   "bg-gray-100 text-gray-500",
   의료:   "bg-red-100 text-red-500",
+  기타:   "bg-gray-100 text-gray-500",
+  생활:   "bg-teal-100 text-teal-600",
+  지출이체: "bg-orange-100 text-orange-600",
 };
 
 const bankFavicons = {
@@ -46,7 +49,6 @@ function Dropdown({ value, options, onChange, label }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
-  // 바깥 클릭 시 닫기
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -96,14 +98,14 @@ function Dropdown({ value, options, onChange, label }) {
 function Transactions() {
   const { transactions } = useData();
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch]                 = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
-  const [typeFilter, setTypeFilter] = useState("전체");
-  const [sortKey, setSortKey] = useState("date_desc");
-  const [limit, setLimit] = useState(20);
+  const [typeFilter, setTypeFilter]         = useState("전체");   // 전체/수입/지출
+  const [cardFilter, setCardFilter]         = useState("전체");   // 전체/체크카드/신용카드
+  const [sortKey, setSortKey]               = useState("date_desc");
+  const [limit, setLimit]                   = useState(20);
 
   const categories = ["전체", ...new Set(transactions.map((t) => t.category))];
-
   const limitDropdownOptions = limitOptions.map((l) => ({ key: l, label: `${l}개` }));
 
   const filtered = useMemo(() => {
@@ -113,7 +115,10 @@ function Transactions() {
       const matchType     = typeFilter === "전체"
         || (typeFilter === "수입" && t.amount > 0)
         || (typeFilter === "지출" && t.amount < 0);
-      return matchSearch && matchCategory && matchType;
+      const matchCard     = cardFilter === "전체"
+        || (cardFilter === "체크카드" && t.account !== "현대카드" && t.amount < 0)
+        || (cardFilter === "신용카드" && t.account === "현대카드");
+      return matchSearch && matchCategory && matchType && matchCard;
     });
 
     result = [...result].sort((a, b) => {
@@ -129,7 +134,7 @@ function Transactions() {
     });
 
     return result.slice(0, limit);
-  }, [transactions, search, selectedCategory, typeFilter, sortKey, limit]);
+  }, [transactions, search, selectedCategory, typeFilter, cardFilter, sortKey, limit]);
 
   return (
     <div className="p-6 space-y-5 max-w-4xl mx-auto">
@@ -162,9 +167,10 @@ function Transactions() {
         />
       </div>
 
-      {/* 두 번째 줄 - 수입/지출 + 카테고리 필터 */}
-      <div className="flex gap-2 flex-wrap items-center">
-        {/* 수입/지출 토글 */}
+      {/* 두 번째 줄 - 수입/지출 | 체크/신용 | 카테고리 */}
+      <div className="flex gap-2 items-center flex-wrap">
+
+        {/* 수입/지출 */}
         {["전체", "수입", "지출"].map((type) => (
           <button
             key={type}
@@ -186,22 +192,34 @@ function Transactions() {
         {/* 구분선 */}
         <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
 
-        {/* 카테고리 필터 */}
-        {categories.map((cat) => (
+        {/* 체크카드/신용카드 */}
+        {["전체", "체크카드", "신용카드"].map((type) => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
+            key={type}
+            onClick={() => setCardFilter(type)}
             className={`
               text-xs px-3 py-1.5 rounded-full font-medium transition-colors
-              ${selectedCategory === cat
-                ? "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950"
+              ${cardFilter === type
+                ? type === "체크카드" ? "bg-blue-500 text-white"
+                : type === "신용카드" ? "bg-purple-500 text-white"
+                : "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950"
                 : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
               }
             `}
           >
-            {cat}
+            {type}
           </button>
         ))}
+
+        {/* 구분선 */}
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+
+        {/* 카테고리 드롭다운 */}
+        <Dropdown
+          value={selectedCategory}
+          options={categories.map((c) => ({ key: c, label: c }))}
+          onChange={setSelectedCategory}
+        />
 
         {/* 건수 표시 */}
         <p className="text-xs text-gray-400 ml-auto">{filtered.length}건</p>

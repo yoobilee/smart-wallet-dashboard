@@ -13,9 +13,13 @@ const bankOptions = [
 ];
 
 function Upload() {
-  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal } = useData();
+  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal, cashBalance, setCashBalance } = useData();
   // 목표 입력 임시 상태 (저장 버튼 누르기 전까지 유지)
   const [goalInput, setGoalInput] = useState(monthlyGoal > 0 ? monthlyGoal.toString() : "");
+  // 예수금 입력 임시 상태
+  const [cmaInput, setCmaInput] = useState(cashBalance.cma > 0 ? cashBalance.cma.toString() : "");
+  const [isaInput, setIsaInput] = useState(cashBalance.isa > 0 ? cashBalance.isa.toString() : "");
+  const [cashSaved, setCashSaved] = useState(false);
 
   const [selectedBank, setSelectedBank] = useState("shinhan");
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -164,6 +168,59 @@ function Upload() {
         {monthlyGoal > 0 && (
           <p className="text-xs text-gray-400">
             현재 목표: <span className="text-gray-700 dark:text-gray-200 font-medium">{monthlyGoal.toLocaleString("ko-KR")}원</span>
+          </p>
+        )}
+      </div>
+
+      {/* 투자 계좌 예수금 */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">투자 계좌 예수금</p>
+          <p className="text-xs text-gray-400 mt-0.5">NH투자증권 앱에서 D+2 예수금 확인 후 입력해주세요</p>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300 w-20">NH CMA</p>
+            <input
+              type="number"
+              placeholder="예: 1690775"
+              value={cmaInput}
+              onChange={(e) => setCmaInput(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+            />
+            <span className="text-sm text-gray-400">원</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-gray-700 dark:text-gray-300 w-20">NH ISA</p>
+            <input
+              type="number"
+              placeholder="예: 213577"
+              value={isaInput}
+              onChange={(e) => setIsaInput(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+            />
+            <span className="text-sm text-gray-400">원</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            setCashBalance({
+              cma: parseInt(cmaInput || "0"),
+              isa: parseInt(isaInput || "0"),
+            });
+            setCashSaved(true);
+          }}
+          className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
+        >
+          {cashSaved ? "✓ 저장됨" : "저장"}
+        </button>
+
+        {(cashBalance.cma > 0 || cashBalance.isa > 0) && (
+          <p className="text-xs text-gray-400">
+            현재 예수금: CMA <span className="text-gray-700 dark:text-gray-200 font-medium">{cashBalance.cma.toLocaleString("ko-KR")}원</span>
+            {" · "} ISA <span className="text-gray-700 dark:text-gray-200 font-medium">{cashBalance.isa.toLocaleString("ko-KR")}원</span>
           </p>
         )}
       </div>
