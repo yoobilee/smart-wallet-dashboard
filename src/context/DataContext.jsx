@@ -207,9 +207,60 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: 0 };
   };
 
+  // ── 카카오페이 파서 ──────────────────────────────
+  const parseKakaoPayCSV = (csvText) => {
+    const lines = csvText.split("\n").filter((l) => l.trim());
+    const dataLines = lines.slice(1);
+    let latestBalance = 0;
+
+    const parsed = dataLines.map((line, index) => {
+      const cols = line.split(",").map((c) => c.trim().replace(/"/g, ""));
+
+      // 카카오페이 컬럼 순서:
+      // 0: 거래일시, 1: 거래구분, 2: 거래금액, 3: 거래후잔액, 4: 은행, 5: 계좌정보/결제정보
+      const date = cols[0] || "";
+      const txType = cols[1] || "";
+      const amount = parseInt(cols[2]?.replace(/,/g, "") || "0");
+      const balance = parseInt(cols[3]?.replace(/,/g, "") || "0");
+      const memo = cols[5] || cols[4] || "";
+
+      latestBalance = balance;  // 매번 덮어써서 마지막 행 잔액 사용
+
+      // 날짜 형식 변환 (2026-04-01 18:04 → 2026-04-01)
+      const formattedDate = date.slice(0, 10);
+
+      // 거래구분으로 입출금 판별
+      // [-] 결제/출금 → 음수, [+] 충전/환급 → 양수
+      const isDebit = txType.includes("[-]");
+      const finalAmount = isDebit ? -amount : amount;
+
+      // 충전은 이체로 처리
+      const isCharge = txType.includes("충전");
+      const category = isCharge ? "이체" : categorize(memo, finalAmount);
+
+      return {
+        id: `kakaopay-${index}`,
+        date: formattedDate,
+        description: memo || txType,
+        category,
+        amount: finalAmount,
+        type: isDebit ? "결제" : "충전",
+        account: "카카오페이",
+      };
+    }).filter((t) => t.amount !== 0);
+
+    return { transactions: parsed, balance: latestBalance };
+  };
+
   // ── 파서 선택 ──────────────────────────────────
   const parseCSV = (csvText, bankType) => {
-    const parsers = { shinhan: parseShinhanCSV, kakao: parseKakaoBankCSV, toss: parseTossBankCSV, hyundai: parseHyundaiCardCSV };
+    const parsers = {
+      shinhan: parseShinhanCSV,
+      kakao: parseKakaoBankCSV,
+      toss: parseTossBankCSV,
+      hyundai: parseHyundaiCardCSV,
+      kakaopay: parseKakaoPayCSV,
+    };
     return (parsers[bankType] || parseShinhanCSV)(csvText);
   };
 
