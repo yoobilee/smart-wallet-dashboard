@@ -12,30 +12,30 @@ import { useData } from "../context/DataContext";
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
-  카페:   "bg-amber-100 text-amber-600",
-  쇼핑:   "bg-pink-100 text-pink-600",
+  카페: "bg-amber-100 text-amber-600",
+  쇼핑: "bg-pink-100 text-pink-600",
   편의점: "bg-orange-100 text-orange-600",
-  투자:   "bg-lime-100 text-lime-600",
-  구독:   "bg-purple-100 text-purple-600",
-  식비:   "bg-green-100 text-green-600",
-  교통:   "bg-cyan-100 text-cyan-600",
-  수입:   "bg-lime-100 text-lime-700",
-  이체:   "bg-gray-100 text-gray-500",
-  의료:   "bg-red-100 text-red-500",
+  투자: "bg-lime-100 text-lime-600",
+  구독: "bg-purple-100 text-purple-600",
+  식비: "bg-green-100 text-green-600",
+  교통: "bg-cyan-100 text-cyan-600",
+  수입: "bg-lime-100 text-lime-700",
+  이체: "bg-gray-100 text-gray-500",
+  의료: "bg-red-100 text-red-500",
 };
 
 const bankFavicons = {
-  신한은행:   "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
+  신한은행: "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
   카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
-  토스뱅크:   "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
-  현대카드:   "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
+  토스뱅크: "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
+  현대카드: "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
   NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
 };
 
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24", "#94a3b8", "#f87171"];
 
 function Dashboard() {
-  const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance } = useData();
+  const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance, monthlyGoal } = useData();
 
   // 현재 날짜 기반으로 날짜 표시
   const now = new Date();
@@ -43,18 +43,18 @@ function Dashboard() {
 
   // 이번 달 범위
   const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const lastDay  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+  const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
 
   // 카드 청구 예정액 (현대카드 - 이번 달 1일~말일 사용액, 매월 5일 청구)
   const totalCardSpending = isDemoMode
     ? dummyCardSpending
     : transactions
-        .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  const totalAssets      = totalBankBalance + totalInvestmentBalance;
+  const totalAssets = totalBankBalance + totalInvestmentBalance;
   const availableBalance = totalBankBalance;
-  const investmentRatio  = totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0;
+  const investmentRatio = totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0;
 
   // 도넛 차트 데이터 (지출 카테고리별)
   const categoryData = Object.entries(
@@ -171,6 +171,87 @@ function Dashboard() {
         </div>
 
       </div>
+
+      {/* 이번 달 지출 목표 게이지 */}
+      {monthlyGoal > 0 && (() => {
+        const spent = Math.abs(thisMonthExpense) + totalCardSpending;
+        const ratio = Math.min((spent / monthlyGoal) * 100, 100);
+        const overRatio = spent > monthlyGoal ? ((spent - monthlyGoal) / monthlyGoal) * 100 : 0;
+        const isOver = spent > monthlyGoal;
+
+        const categorySpending = Object.entries(
+          transactions
+            .filter((t) => t.amount < 0 && t.category !== "이체")
+            .reduce((acc, t) => {
+              acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
+              return acc;
+            }, {})
+        )
+          .sort((a, b) => b[1] - a[1])
+          .map(([name, value]) => ({ name, value }));
+
+        return (
+          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">이번 달 지출 목표</h2>
+              <p className={`text-xs font-medium ${isOver ? "text-rose-500" : "text-gray-400"}`}>
+                {isOver ? `목표 초과 +${formatKRW(spent - monthlyGoal)}` : `${Math.round(ratio)}% 사용`}
+              </p>
+            </div>
+
+            <div className="flex items-end gap-6">
+
+              {/* 세로 게이지 */}
+              <div className="relative group cursor-default">
+                <div className="flex items-end h-32">
+                  <div className="w-8 h-full flex flex-col justify-end rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {isOver && (
+                      <div className="w-full bg-rose-400 transition-all duration-700" style={{ height: `${Math.min(overRatio, 100)}%` }} />
+                    )}
+                    <div
+                      className={`w-full transition-all duration-700 ${isOver ? "bg-rose-300" : "bg-lime-400"}`}
+                      style={{ height: `${ratio}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 호버 툴팁 */}
+                <div className="absolute left-12 bottom-0 hidden group-hover:block z-10 min-w-44">
+                  <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-lg">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2.5">카테고리별 지출</p>
+                    <div className="space-y-2">
+                      {categorySpending.map(({ name, value }) => (
+                        <div key={name} className="flex items-center justify-between gap-8">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{name}</p>
+                          <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">{formatKRW(value)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 텍스트 정보 */}
+              <div className="space-y-3 flex-1">
+                <div>
+                  <p className="text-xs text-gray-400">사용액</p>
+                  <p className={`text-2xl font-bold mt-0.5 ${isOver ? "text-rose-500" : "text-gray-800 dark:text-white"}`}>
+                    {formatKRW(spent)}
+                  </p>
+                </div>
+                <div className="w-full h-px bg-gray-100 dark:bg-gray-800" />
+                <div>
+                  <p className="text-xs text-gray-400">목표</p>
+                  <p className="text-lg font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
+                    {formatKRW(monthlyGoal)}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 최근 거래 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">

@@ -28,6 +28,11 @@ export function DataProvider({ children }) {
   // 종목별 현재가 상태
   const [prices, setPrices] = useState({});
 
+  // 이번 달 지출 목표 (localStorage에 저장)
+  const [monthlyGoal, setMonthlyGoal] = useState(() => {
+    return parseInt(localStorage.getItem("monthlyGoal") || "0");
+  });
+
   // 현재 모드에 따라 사용할 데이터 반환
   const transactions = isDemoMode ? dummyTransactions : realTransactions;
   const accounts = isDemoMode ? dummyAccounts : realAccounts;
@@ -357,6 +362,10 @@ export function DataProvider({ children }) {
     localStorage.setItem("holdings", JSON.stringify(holdings));
   }, [holdings]);
 
+  useEffect(() => {
+    localStorage.setItem("monthlyGoal", monthlyGoal);
+  }, [monthlyGoal]);
+
   return (
     <DataContext.Provider value={{
       transactions,
@@ -373,6 +382,8 @@ export function DataProvider({ children }) {
       prices,
       setPrices,
       totalInvestmentBalance,
+      monthlyGoal,
+      setMonthlyGoal,
     }}>
       {children}
     </DataContext.Provider>

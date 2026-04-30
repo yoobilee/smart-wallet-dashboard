@@ -6,14 +6,16 @@ import { useState } from "react";
 import { useData } from "../context/DataContext";
 
 const bankOptions = [
-  { key: "shinhan", label: "신한은행",  available: true  },
-  { key: "kakao",   label: "카카오뱅크", available: true  },
-  { key: "toss",    label: "토스뱅크",  available: true  },
-  { key: "hyundai", label: "현대카드",  available: true  },
+  { key: "shinhan", label: "신한은행", available: true },
+  { key: "kakao", label: "카카오뱅크", available: true },
+  { key: "toss", label: "토스뱅크", available: true },
+  { key: "hyundai", label: "현대카드", available: true },
 ];
 
 function Upload() {
-  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo } = useData();
+  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal } = useData();
+  // 목표 입력 임시 상태 (저장 버튼 누르기 전까지 유지)
+  const [goalInput, setGoalInput] = useState(monthlyGoal > 0 ? monthlyGoal.toString() : "");
 
   const [selectedBank, setSelectedBank] = useState("shinhan");
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -60,11 +62,10 @@ function Upload() {
       </div>
 
       {/* 현재 모드 표시 배너 */}
-      <div className={`rounded-2xl px-5 py-4 border ${
-        isDemoMode
-          ? "bg-amber-50 dark:bg-amber-950 border-amber-100 dark:border-amber-900"
-          : "bg-lime-50 dark:bg-lime-950 border-lime-100 dark:border-lime-900"
-      }`}>
+      <div className={`rounded-2xl px-5 py-4 border ${isDemoMode
+        ? "bg-amber-50 dark:bg-amber-950 border-amber-100 dark:border-amber-900"
+        : "bg-lime-50 dark:bg-lime-950 border-lime-100 dark:border-lime-900"
+        }`}>
         <p className={`text-sm font-medium ${isDemoMode ? "text-amber-700 dark:text-amber-400" : "text-lime-700 dark:text-lime-400"}`}>
           {isDemoMode ? "Demo Mode" : "실제 데이터 모드"}
         </p>
@@ -133,6 +134,38 @@ function Upload() {
             {isLoading ? "파일 읽는 중..." : "파일 선택"}
           </span>
         </label>
+      </div>
+
+      {/* 이번 달 지출 목표 설정 */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">이번 달 지출 목표</p>
+          <p className="text-xs text-gray-400 mt-0.5">설정한 목표를 넘기면 Dashboard에서 빨간색으로 표시돼요</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            placeholder="예: 500000"
+            value={goalInput}
+            onChange={(e) => setGoalInput(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+          />
+          <span className="text-sm text-gray-400">원</span>
+          <button
+            onClick={() => setMonthlyGoal(parseInt(goalInput.replace(/,/g, "") || "0"))}
+            className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
+          >
+            저장
+          </button>
+        </div>
+
+        {/* 현재 설정된 목표 표시 */}
+        {monthlyGoal > 0 && (
+          <p className="text-xs text-gray-400">
+            현재 목표: <span className="text-gray-700 dark:text-gray-200 font-medium">{monthlyGoal.toLocaleString("ko-KR")}원</span>
+          </p>
+        )}
       </div>
 
       {/* 더미 데이터로 초기화 */}
