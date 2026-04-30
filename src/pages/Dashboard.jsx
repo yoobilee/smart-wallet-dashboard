@@ -1,47 +1,65 @@
+// =============================================
+// Dashboard 페이지 - 메인 화면
+// 자산 현황, 수입/지출 요약, 최근 거래 내역, 도넛 차트
+// =============================================
+
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { totalCardSpending as dummyCardSpending } from "../data/dummyData";
+import {
+  totalCardSpending as dummyCardSpending,
+} from "../data/dummyData";
 import { useData } from "../context/DataContext";
 
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
-  카페: "bg-amber-100 text-amber-600",
-  쇼핑: "bg-pink-100 text-pink-600",
+  카페:   "bg-amber-100 text-amber-600",
+  쇼핑:   "bg-pink-100 text-pink-600",
   편의점: "bg-orange-100 text-orange-600",
-  투자: "bg-lime-100 text-lime-600",
-  구독: "bg-purple-100 text-purple-600",
-  식비: "bg-green-100 text-green-600",
-  교통: "bg-cyan-100 text-cyan-600",
-  수입: "bg-lime-100 text-lime-700",
-  이체: "bg-gray-100 text-gray-500",
-  의료: "bg-red-100 text-red-500",
+  투자:   "bg-lime-100 text-lime-600",
+  구독:   "bg-purple-100 text-purple-600",
+  식비:   "bg-green-100 text-green-600",
+  교통:   "bg-cyan-100 text-cyan-600",
+  수입:   "bg-lime-100 text-lime-700",
+  이체:   "bg-gray-100 text-gray-500",
+  의료:   "bg-red-100 text-red-500",
 };
 
-const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24"];
+const bankFavicons = {
+  신한은행:   "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
+  카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
+  토스뱅크:   "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
+  현대카드:   "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
+  NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
+};
+
+const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24", "#94a3b8", "#f87171"];
 
 function Dashboard() {
-  // DataContext에서 현재 모드에 맞는 거래내역 가져오기
   const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance } = useData();
 
-  // 실제 데이터 모드일 때는 투자/카드 더미 데이터 제외
-  const totalAssets = totalBankBalance + totalInvestmentBalance;
-  const availableBalance = totalBankBalance;
-
-  // 이번 달 카드 청구 예정액 (현대카드 거래내역 기준)
+  // 현재 날짜 기반으로 날짜 표시
   const now = new Date();
-  const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-  const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+  const currentMonthLabel = `${now.getFullYear()}년 ${now.getMonth() + 1}월 기준`;
 
+  // 이번 달 범위
+  const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const lastDay  = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+
+  // 카드 청구 예정액 (현대카드 - 이번 달 1일~말일 사용액, 매월 5일 청구)
   const totalCardSpending = isDemoMode
     ? dummyCardSpending
     : transactions
-      .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  // 카테고리별 지출 합계 계산 (여기로 이동!)
+  const totalAssets      = totalBankBalance + totalInvestmentBalance;
+  const availableBalance = totalBankBalance;
+  const investmentRatio  = totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0;
+
+  // 도넛 차트 데이터 (지출 카테고리별)
   const categoryData = Object.entries(
     transactions
-      .filter((t) => t.amount < 0 && t.category !== "투자")
+      .filter((t) => t.amount < 0 && t.category !== "투자" && t.category !== "이체")
       .reduce((acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
         return acc;
@@ -49,14 +67,14 @@ function Dashboard() {
   ).map(([name, value]) => ({ name, value }));
 
   const recentTransactions = transactions.slice(0, 5);
-  const investmentRatio = (totalInvestmentBalance / totalAssets) * 100;
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
 
+      {/* 상단 타이틀 */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Overview</h1>
-        <p className="text-sm text-gray-400 mt-1">2026년 4월 기준</p>
+        <p className="text-sm text-gray-400 mt-1">{currentMonthLabel}</p>
       </div>
 
       {/* 총 자산 카드 */}
@@ -89,54 +107,87 @@ function Dashboard() {
 
       {/* 요약 + 차트 */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-4">
-          <div className="bg-white dark:bg-gray-900 dark:border-gray-800 border border-gray-100 rounded-2xl p-4 shadow-sm">
+
+        {/* 왼쪽 - 수입/지출/카드 요약 */}
+        <div className="space-y-3">
+          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-400">이번 달 수입</p>
             <p className="text-xl font-bold text-lime-600 mt-1">+{formatKRW(thisMonthIncome)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-900 dark:border-gray-800 border border-gray-100 rounded-2xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
             <p className="text-xs text-gray-400">이번 달 지출</p>
             <p className="text-xl font-bold text-rose-500 mt-1">-{formatKRW(thisMonthExpense)}</p>
           </div>
-          <div className="bg-white dark:bg-gray-900 dark:border-gray-800 border border-gray-100 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-gray-400">카드 청구 예정</p>
+          <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
+            <p className="text-xs text-gray-400">현대카드 청구 예정 <span className="text-gray-300">· 매월 5일</span></p>
             <p className="text-xl font-bold text-gray-800 dark:text-white mt-1">{formatKRW(totalCardSpending)}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 dark:border-gray-800 border border-gray-100 rounded-2xl p-5 shadow-sm">
+        {/* 오른쪽 - 도넛 차트 */}
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm flex flex-col">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">지출 카테고리</h2>
-          <ResponsiveContainer width="100%" height={160}>
-            <PieChart>
-              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={3} stroke="none">
-                {categoryData.map((entry, index) => (
-                  <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value) => [formatKRW(value), "지출"]}
-                contentStyle={{ borderRadius: "12px", border: "1px solid #1f2937", backgroundColor: "#111827", color: "#fff", fontSize: "12px" }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2">
-            {categoryData.map((entry, index) => (
-              <div key={entry.name} className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">{entry.name}</span>
-              </div>
-            ))}
+
+          <div className="flex items-center gap-4 flex-1">
+            {/* 차트 */}
+            <div className="w-32 h-32 flex-shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={35}
+                    outerRadius={55}
+                    dataKey="value"
+                    paddingAngle={3}
+                    stroke="none"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => [formatKRW(value), "지출"]}
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #1f2937", backgroundColor: "#111827", color: "#fff", fontSize: "12px" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* 범례 */}
+            <div className="flex flex-col gap-1.5 flex-1">
+              {categoryData.map((entry, index) => (
+                <div key={entry.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{entry.name}</span>
+                  </div>
+                  <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">{formatKRW(entry.value)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
       </div>
 
       {/* 최근 거래 */}
-      <div className="bg-white dark:bg-gray-900 dark:border-gray-800 border border-gray-100 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">최근 거래</h2>
         <div className="space-y-1">
           {recentTransactions.map((t) => (
             <div key={t.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div className="flex items-center gap-3">
+                {/* 은행 로고 */}
+                {t.account && bankFavicons[t.account] && (
+                  <img
+                    src={bankFavicons[t.account]}
+                    alt={t.account}
+                    className="w-4 h-4 rounded-sm flex-shrink-0"
+                    onError={(e) => e.target.style.display = "none"}
+                  />
+                )}
                 <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryColor[t.category] || "bg-gray-100 text-gray-600"}`}>
                   {t.category}
                 </span>
