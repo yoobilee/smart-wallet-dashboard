@@ -13,6 +13,8 @@ const categoryColor = {
   식비: "bg-green-100 text-green-600",
   교통: "bg-cyan-100 text-cyan-600",
   수입: "bg-lime-100 text-lime-700",
+  이체: "bg-gray-100 text-gray-500",
+  의료: "bg-red-100 text-red-500",
 };
 
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24"];
@@ -22,9 +24,19 @@ function Dashboard() {
   const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance } = useData();
 
   // 실제 데이터 모드일 때는 투자/카드 더미 데이터 제외
-  const totalCardSpending = isDemoMode ? dummyCardSpending : 0;
   const totalAssets = totalBankBalance + totalInvestmentBalance;
   const availableBalance = totalBankBalance;
+
+  // 이번 달 카드 청구 예정액 (현대카드 거래내역 기준)
+  const now = new Date();
+  const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+
+  const totalCardSpending = isDemoMode
+    ? dummyCardSpending
+    : transactions
+      .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   // 카테고리별 지출 합계 계산 (여기로 이동!)
   const categoryData = Object.entries(

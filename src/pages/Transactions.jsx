@@ -1,82 +1,210 @@
 // =============================================
 // Transactions 페이지 - 전체 거래 내역
-// 다크모드 적용
+// 미니멀 필터 UI - 검색 + 정렬/개수 한 줄, 카테고리 한 줄
 // =============================================
 
-import { useState } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useData } from "../context/DataContext";
+import { ArrowUpDown, ChevronDown } from "lucide-react";
 
 const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
-  카페: "bg-amber-100 text-amber-600",
-  쇼핑: "bg-pink-100 text-pink-600",
+  카페:   "bg-amber-100 text-amber-600",
+  쇼핑:   "bg-pink-100 text-pink-600",
   편의점: "bg-orange-100 text-orange-600",
-  투자: "bg-lime-100 text-lime-600",
-  구독: "bg-purple-100 text-purple-600",
-  식비: "bg-green-100 text-green-600",
-  교통: "bg-cyan-100 text-cyan-600",
-  수입: "bg-lime-100 text-lime-700",
+  투자:   "bg-lime-100 text-lime-600",
+  구독:   "bg-purple-100 text-purple-600",
+  식비:   "bg-green-100 text-green-600",
+  교통:   "bg-cyan-100 text-cyan-600",
+  수입:   "bg-lime-100 text-lime-700",
+  이체:   "bg-gray-100 text-gray-500",
+  의료:   "bg-red-100 text-red-500",
 };
 
-// 은행별 파비콘 URL (Google 파비콘 서비스 사용)
 const bankFavicons = {
-  신한은행:    "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
-  카카오뱅크:  "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
-  토스뱅크:    "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
-  현대카드:    "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
-  NH투자증권:  "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
+  신한은행:   "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
+  카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
+  토스뱅크:   "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
+  현대카드:   "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
+  NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
 };
+
+const sortOptions = [
+  { key: "date_desc",   label: "최신순"       },
+  { key: "date_asc",    label: "오래된순"      },
+  { key: "amount_desc", label: "금액 높은순"   },
+  { key: "amount_asc",  label: "금액 낮은순"   },
+  { key: "name_asc",    label: "이름 오름차순" },
+  { key: "name_desc",   label: "이름 내림차순" },
+];
+
+const limitOptions = [20, 50, 100];
+
+// 커스텀 드롭다운 컴포넌트
+function Dropdown({ value, options, onChange, label }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selected = options.find((o) => o.key === value) || options.find((o) => o === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors"
+      >
+        {label && <span className="text-gray-400">{label}</span>}
+        <span className="font-medium text-gray-700 dark:text-gray-200">
+          {selected?.label || selected}
+        </span>
+        <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg z-10 min-w-32 overflow-hidden">
+          {options.map((opt) => (
+            <button
+              key={opt.key || opt}
+              onClick={() => { onChange(opt.key || opt); setOpen(false); }}
+              className={`
+                w-full text-left text-xs px-4 py-2.5 transition-colors
+                ${(opt.key || opt) === value
+                  ? "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-medium"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }
+              `}
+            >
+              {opt.label || opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Transactions() {
-  // DataContext에서 현재 모드에 맞는 거래내역 가져오기
   const { transactions } = useData();
+
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("전체");
+  const [typeFilter, setTypeFilter] = useState("전체");
+  const [sortKey, setSortKey] = useState("date_desc");
+  const [limit, setLimit] = useState(20);
 
   const categories = ["전체", ...new Set(transactions.map((t) => t.category))];
 
-  const filtered = transactions.filter((t) => {
-    const matchSearch = t.description.includes(search);
-    const matchCategory = selectedCategory === "전체" || t.category === selectedCategory;
-    return matchSearch && matchCategory;
-  });
+  const limitDropdownOptions = limitOptions.map((l) => ({ key: l, label: `${l}개` }));
+
+  const filtered = useMemo(() => {
+    let result = transactions.filter((t) => {
+      const matchSearch   = t.description.includes(search);
+      const matchCategory = selectedCategory === "전체" || t.category === selectedCategory;
+      const matchType     = typeFilter === "전체"
+        || (typeFilter === "수입" && t.amount > 0)
+        || (typeFilter === "지출" && t.amount < 0);
+      return matchSearch && matchCategory && matchType;
+    });
+
+    result = [...result].sort((a, b) => {
+      switch (sortKey) {
+        case "date_desc":   return new Date(b.date) - new Date(a.date);
+        case "date_asc":    return new Date(a.date) - new Date(b.date);
+        case "amount_desc": return Math.abs(b.amount) - Math.abs(a.amount);
+        case "amount_asc":  return Math.abs(a.amount) - Math.abs(b.amount);
+        case "name_asc":    return a.description.localeCompare(b.description, "ko");
+        case "name_desc":   return b.description.localeCompare(a.description, "ko");
+        default:            return 0;
+      }
+    });
+
+    return result.slice(0, limit);
+  }, [transactions, search, selectedCategory, typeFilter, sortKey, limit]);
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
+    <div className="p-6 space-y-5 max-w-4xl mx-auto">
 
+      {/* 상단 타이틀 */}
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Transactions</h1>
         <p className="text-sm text-gray-400 mt-1">전체 거래 내역</p>
       </div>
 
-      {/* 검색 + 필터 */}
-      <div className="space-y-3">
+      {/* 첫 번째 줄 - 검색 + 정렬 + 개수 */}
+      <div className="flex items-center gap-2">
         <input
           type="text"
           placeholder="거래처 검색..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+          className="flex-1 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 placeholder-gray-400"
         />
+        <Dropdown
+          value={sortKey}
+          options={sortOptions}
+          onChange={setSortKey}
+          label={<ArrowUpDown size={11} />}
+        />
+        <Dropdown
+          value={limit}
+          options={limitDropdownOptions}
+          onChange={(v) => setLimit(Number(v))}
+        />
+      </div>
 
-        <div className="flex gap-2 flex-wrap">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`
-                text-xs px-3 py-1.5 rounded-full font-medium transition-colors
-                ${selectedCategory === cat
-                  ? "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950"
-                  : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
-                }
-              `}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      {/* 두 번째 줄 - 수입/지출 + 카테고리 필터 */}
+      <div className="flex gap-2 flex-wrap items-center">
+        {/* 수입/지출 토글 */}
+        {["전체", "수입", "지출"].map((type) => (
+          <button
+            key={type}
+            onClick={() => setTypeFilter(type)}
+            className={`
+              text-xs px-3 py-1.5 rounded-full font-medium transition-colors
+              ${typeFilter === type
+                ? type === "수입" ? "bg-lime-500 text-white"
+                : type === "지출" ? "bg-rose-500 text-white"
+                : "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950"
+                : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
+              }
+            `}
+          >
+            {type}
+          </button>
+        ))}
+
+        {/* 구분선 */}
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+
+        {/* 카테고리 필터 */}
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`
+              text-xs px-3 py-1.5 rounded-full font-medium transition-colors
+              ${selectedCategory === cat
+                ? "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950"
+                : "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400"
+              }
+            `}
+          >
+            {cat}
+          </button>
+        ))}
+
+        {/* 건수 표시 */}
+        <p className="text-xs text-gray-400 ml-auto">{filtered.length}건</p>
       </div>
 
       {/* 거래 내역 리스트 */}
@@ -88,13 +216,12 @@ function Transactions() {
             {filtered.map((t) => (
               <div key={t.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                 <div className="flex items-center gap-3">
-                  {/* 은행 파비콘 */}
                   {t.account && bankFavicons[t.account] && (
                     <img
                       src={bankFavicons[t.account]}
                       alt={t.account}
                       className="w-4 h-4 rounded-sm flex-shrink-0"
-                      onError={(e) => e.target.style.display = "none"}  // 로고 못 불러오면 숨김
+                      onError={(e) => e.target.style.display = "none"}
                     />
                   )}
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryColor[t.category] || "bg-gray-100 text-gray-600"}`}>
@@ -102,7 +229,7 @@ function Transactions() {
                   </span>
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{t.description}</p>
-                    <p className="text-xs text-gray-400">{t.date} · {t.account} · {t.type}</p>
+                    <p className="text-xs text-gray-400">{t.date} · {t.account}</p>
                   </div>
                 </div>
                 <p className={`text-sm font-semibold ${t.amount > 0 ? "text-lime-600" : "text-gray-800 dark:text-gray-100"}`}>

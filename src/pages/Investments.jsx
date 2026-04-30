@@ -130,7 +130,6 @@ function Investments() {
       </div>
 
       {/* 총 투자 자산 카드 */}
-      // 후
       <div className="bg-gray-950 text-white rounded-2xl p-6 dark:bg-gray-900 dark:border dark:border-gray-800 space-y-3">
         <div>
           <p className="text-sm text-gray-400">총 투자 자산</p>
