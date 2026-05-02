@@ -71,9 +71,22 @@ export function DataProvider({ children }) {
   const [monthlyGoal, setMonthlyGoal] = useState(() =>
     parseInt(localStorage.getItem("monthlyGoal") || "0")
   );
-  const [cashBalance, setCashBalance] = useState(() => {
-    const saved = localStorage.getItem("cashBalance");
-    return saved ? JSON.parse(saved) : { cma: 0, isa: 0 };
+  const [manualBalances, setManualBalances] = useState(() => {
+    const saved = localStorage.getItem("manualBalances");
+    return saved ? JSON.parse(saved) : {
+      // 은행
+      웰컴은행: 0,
+      사이다뱅크: 0,
+      // 투자 예수금
+      NH_CMA: 0,
+      NH_ISA: 0,
+      토스증권: 0,
+      유안타: 0,
+      카카오페이증권: 0,
+      // 페이
+      네이버페이: 0,
+      카카오페이머니: 0,
+    };
   });
 
   const transactions = isDemoMode ? dummyTransactions : realTransactions;
@@ -252,6 +265,52 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: latestBalance };
   };
 
+  // ── 우리은행 파서 ──────────────────────────────
+  const parseWooriBankCSV = (csvText) => {
+    const lines = csvText.split("\n").filter((l) => l.trim());
+    const dataLines = lines.slice(1);
+    let latestBalance = 0;
+
+    const parsed = dataLines.map((line, index) => {
+      const cols = [];
+      let current = "", inQuotes = false;
+      for (const char of line) {
+        if (char === '"') { inQuotes = !inQuotes; }
+        else if (char === "," && !inQuotes) { cols.push(current.trim()); current = ""; }
+        else { current += char; }
+      }
+      cols.push(current.trim());
+
+      // 우리은행 컬럼 순서:
+      // 0: 거래일시, 1: 적요, 2: 월분, 3: 납입회차, 4: 기재내용
+      // 5: 찾으신금액, 6: 맡기신금액, 7: 거래후잔액, 8: 메모
+      const date = cols[0] || "";
+      const memo = cols[4] || cols[1] || "";
+      const outAmt = parseInt(cols[5]?.replace(/,/g, "") || "0");
+      const inAmt = parseInt(cols[6]?.replace(/,/g, "") || "0");
+      const balance = parseInt(cols[7]?.replace(/,/g, "") || "0");
+      const amount = inAmt > 0 ? inAmt : -outAmt;
+
+      // 마지막 행 잔액을 현재 잔액으로 사용
+      latestBalance = balance;
+
+      // 날짜 형식 변환 (2026.04.10 08:40 → 2026-04-10)
+      const formattedDate = date.slice(0, 10).replace(/\./g, "-");
+
+      return {
+        id: `woori-${index}`,
+        date: formattedDate,
+        description: memo,
+        category: categorize(memo, amount),
+        amount,
+        type: inAmt > 0 ? "입금" : "출금",
+        account: "우리은행",
+      };
+    }).filter((t) => t.amount !== 0);
+
+    return { transactions: parsed, balance: latestBalance };
+  };
+
   // ── 파서 선택 ──────────────────────────────────
   const parseCSV = (csvText, bankType) => {
     const parsers = {
@@ -260,6 +319,7 @@ export function DataProvider({ children }) {
       toss: parseTossBankCSV,
       hyundai: parseHyundaiCardCSV,
       kakaopay: parseKakaoPayCSV,
+      woori: parseWooriBankCSV,
     };
     return (parsers[bankType] || parseShinhanCSV)(csvText);
   };
@@ -293,8 +353,15 @@ export function DataProvider({ children }) {
   const resetToDemo = () => { setRealTransactions([]); setRealAccounts([]); setIsDemoMode(true); };
 
   // ── 계산 ───────────────────────────────────────
-  const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-  const totalInvestmentBalance = holdings.reduce((sum, h) => sum + (prices[h.code] || 0) * h.qty, 0) + cashBalance.cma + cashBalance.isa;
+  const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+    + (manualBalances.웰컴은행 || 0)
+    + (manualBalances.사이다뱅크 || 0);
+  const totalInvestmentBalance = holdings.reduce((sum, h) => sum + (prices[h.code] || 0) * h.qty, 0)
+    + (manualBalances.NH_CMA || 0)
+    + (manualBalances.NH_ISA || 0)
+    + (manualBalances.토스증권 || 0)
+    + (manualBalances.유안타 || 0)
+    + (manualBalances.카카오페이증권 || 0);
   const { start: thisMonthStart, end: thisMonthEnd } = getThisMonthRange();
 
   const thisMonthIncome = transactions
@@ -308,7 +375,7 @@ export function DataProvider({ children }) {
   // ── localStorage 동기화 ────────────────────────
   useEffect(() => { localStorage.setItem("holdings", JSON.stringify(holdings)); }, [holdings]);
   useEffect(() => { localStorage.setItem("monthlyGoal", monthlyGoal); }, [monthlyGoal]);
-  useEffect(() => { localStorage.setItem("cashBalance", JSON.stringify(cashBalance)); }, [cashBalance]);
+  useEffect(() => { localStorage.setItem("manualBalances", JSON.stringify(manualBalances)); }, [manualBalances]);
 
   return (
     <DataContext.Provider value={{
@@ -317,7 +384,8 @@ export function DataProvider({ children }) {
       totalBankBalance, thisMonthIncome, thisMonthExpense, totalInvestmentBalance,
       holdings, setHoldings, prices, setPrices,
       monthlyGoal, setMonthlyGoal,
-      cashBalance, setCashBalance,
+      manualBalances,
+      setManualBalances,
     }}>
       {children}
     </DataContext.Provider>

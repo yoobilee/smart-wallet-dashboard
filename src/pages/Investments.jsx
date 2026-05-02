@@ -90,7 +90,7 @@ function Investments() {
   // 수량 변경
   const handleQtyChange = (id, value) => {
     setHoldings((prev) =>
-      prev.map((h) => h.id === id ? { ...h, qty: parseInt(value) || 0 } : h)
+      prev.map((h) => h.id === id ? { ...h, qty: parseFloat(value) || 0 } : h)
     );
   };
 
@@ -271,6 +271,9 @@ function Investments() {
               >
                 <option value="NH CMA">NH CMA</option>
                 <option value="NH ISA">NH ISA</option>
+                <option value="유안타">유안타</option>
+                <option value="토스증권">토스증권</option>
+                <option value="카카오페이">카카오페이</option>
               </select>
               {/* 종목명 */}
               <input
@@ -293,6 +296,7 @@ function Investments() {
                 type="number"
                 placeholder="수량"
                 value={h.qty}
+                step="0.001"
                 onChange={(e) => handleQtyChange(h.id, e.target.value)}
                 className="w-16 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 outline-none"
               />

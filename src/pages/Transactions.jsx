@@ -32,6 +32,7 @@ const bankFavicons = {
   현대카드:   "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
   NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
   카카오페이: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
+  우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
 };
 
 const sortOptions = [

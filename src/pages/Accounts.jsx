@@ -9,7 +9,7 @@ const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 function Accounts() {
   // DataContext에서 현재 모드에 맞는 계좌 정보 가져오기
-  const { accounts, holdings, prices, transactions, cashBalance } = useData();
+  const { accounts, holdings, prices, transactions, manualBalances } = useData();
 
   // 계좌별 투자 총액 계산
   const accountTotals = holdings.reduce((acc, h) => {
@@ -23,8 +23,9 @@ function Accounts() {
     id: name,
     platform: name,
     balance: (accountTotals[name] || 0) + (
-      name === "NH CMA" ? cashBalance.cma :
-        name === "NH ISA" ? cashBalance.isa : 0
+      name === "NH CMA" ? (manualBalances.NH_CMA || 0) :
+        name === "NH ISA" ? (manualBalances.NH_ISA || 0) :
+          name === "유안타" ? (manualBalances.유안타 || 0) : 0
     ),
   }));
   return (
@@ -39,7 +40,7 @@ function Accounts() {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">은행 계좌</h2>
         <div className="space-y-1">
-          {accounts.filter((acc) => acc.type !== "카드").map((acc) => (
+          {accounts.filter((acc) => acc.type !== "카드" && acc.type !== "저축").map((acc) => (
             <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div>
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
@@ -50,6 +51,24 @@ function Accounts() {
           ))}
         </div>
       </div>
+
+      {/* 저축 계좌 */}
+      {accounts.filter((acc) => acc.type === "저축").length > 0 && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">저축 계좌</h2>
+          <div className="space-y-1">
+            {accounts.filter((acc) => acc.type === "저축").map((acc) => (
+              <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
+                <div>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
+                  <p className="text-xs text-gray-400">저축 · {acc.accountNumber}</p>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatKRW(acc.balance)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 투자 계좌 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
@@ -110,6 +129,29 @@ function Accounts() {
           )}
         </div>
       </div>
+
+      {/* 페이 */}
+      {(manualBalances.네이버페이 > 0 || manualBalances.카카오페이머니 > 0) && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">페이</h2>
+          <div className="space-y-1">
+            {[
+              ["네이버페이", "네이버페이"],
+              ["카카오페이머니", "카카오페이 머니"],
+            ].filter(([key]) => manualBalances[key] > 0).map(([key, label]) => (
+              <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
+                <div>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
+                  <p className="text-xs text-gray-400">페이머니</p>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {formatKRW(manualBalances[key])}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );
