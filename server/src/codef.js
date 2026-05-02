@@ -35,8 +35,11 @@ const getTransactions = async (connectedId, organization, account, startDate, en
     connectedId,
     organization,
     account,
-    startDate,  // YYYYMMDD
-    endDate,    // YYYYMMDD
+    startDate,
+    endDate,
+    orderBy:      "0",  // 0: 최신순
+    inquiryType:  "0",  // 0: 전체
+    countPerPage: "100",
   };
 
   const result = await codef.requestProduct(

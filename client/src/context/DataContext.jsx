@@ -1,7 +1,14 @@
+// =============================================
+// DataContext.jsx - 전역 데이터 상태 관리
+// =============================================
+
 import { createContext, useContext, useState, useEffect } from "react";
 import { transactions as dummyTransactions, accounts as dummyAccounts } from "../data/dummyData";
 
-// ── 카테고리 키워드 (컴포넌트 밖으로 분리 - 재렌더링마다 재생성 방지) ──
+// ── 상수 ───────────────────────────────────────
+const MY_NAME = "이유비";
+const SHINHAN_TRANSFER_TYPES = ["모바일", "타행IB", "FB이체"];
+
 const CATEGORY_KEYWORDS = {
   카페: ["스타벅스", "커피", "카페", "이디야", "빽다방", "메가커피", "투썸", "할리스", "폴바셋", "커피빈", "엔젤리너스", "뚜레쥬르", "파리바게뜨", "던킨", "논오프", "공차", "더벤티", "매머드커피", "블루보틀", "디저트", "베이커리", "하이오커피", "빙수", "케이크"],
   식비: ["식당", "맥도날드", "버거킹", "롯데리아", "KFC", "맘스터치", "배달", "요기요", "배민", "쿠팡이츠", "김밥", "피자", "팔로피자", "도미노", "파파존스", "BBQ", "굽네", "BHC", "교촌", "서브웨이", "샌드위치", "포케", "초밥", "스시", "일식", "중식", "한식", "분식", "국밥", "칼국수", "냉면", "떡볶이", "치킨", "삼겹살", "고기", "식자재", "뉴월드", "마트", "배스킨", "아이스크림", "버거", "도넛"],
@@ -15,31 +22,31 @@ const CATEGORY_KEYWORDS = {
   이체: ["네이버페이충전", "네이버페이", "카카오페이", "토스", "페이코", "FB이체", "타행이체", "CD송금", "현대카드", "신한카드", "삼성카드", "KB카드", "롯데카드", "우리카드", "이유비"],
 };
 
-// 본인 이름 (이체 판별용)
-const MY_NAME = "이유비";
-
-// 이체성 적요 키워드 (신한은행)
-const SHINHAN_TRANSFER_TYPES = ["모바일", "타행IB", "FB이체"];
-
-// ── 카테고리 분류 함수 (컴포넌트 밖으로 분리) ──
+// ── 순수 함수 (컴포넌트 밖) ───────────────────
 const categorize = (description, amount) => {
   const d = description || "";
-
   if (amount > 0) {
     if (d.includes("급여") || d.includes("월급")) return "수입";
     if (d.includes("이자")) return "수입";
     if (d.includes("컴즈")) return "수입";
-    return "이체";
+    return "수입";  // 이체 판별은 각 파서에서 처리하므로 여기까지 오면 수입
   }
-
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (keywords.some((k) => d.includes(k))) return category;
   }
-
   return "기타";
 };
 
-// ── 이번 달 날짜 범위 계산 함수 ──
+const getTransferCategory = (memo, isTransfer, amount) => {
+  if (!isTransfer) return null;
+  if (amount > 0) {
+    // 입금 이체: 본인 이름이면 이체, 아니면 수입
+    return memo.includes(MY_NAME) ? "이체" : null; // null이면 categorize로 넘어가 수입 처리
+  }
+  // 출금 이체: 본인 이름이면 이체, 아니면 지출이체
+  return memo.includes(MY_NAME) ? "이체" : "지출이체";
+};
+
 const getThisMonthRange = () => {
   const now = new Date();
   const year = now.getFullYear();
@@ -51,12 +58,26 @@ const getThisMonthRange = () => {
   };
 };
 
-// ── 타인 이체 카테고리 판별 함수 ──
-const getTransferCategory = (memo, isTransfer) => {
-  if (!isTransfer) return null;
-  return memo.includes(MY_NAME) ? "이체" : "지출이체";
+// 신한은행 공통 카테고리 분류 (CSV 파서 + CODEF 공유)
+const categorizeShinhan = (shinhanType, memo, amount) => {
+  // 출금: 페이충전/카드결제/본인이체 → 이체, 타인이체 → 지출이체
+  if (amount < 0) {
+    const isPaymentCharge = ["네이버페이충전", "네이버페이", "카카오페이", "현대카드", MY_NAME].some((k) => memo.includes(k));
+    const isPersonalTransfer = SHINHAN_TRANSFER_TYPES.includes(shinhanType);
+    const transferCategory = getTransferCategory(memo, isPersonalTransfer, amount);
+    return isPaymentCharge ? "이체" : transferCategory ?? categorize(memo, amount);
+  }
+  if (amount > 0) {
+    const isSelfTransfer = ["CD송금", "타행IB", "타행MB", "타행PC", "타행FB"].includes(shinhanType) && memo.includes(MY_NAME);
+    return isSelfTransfer ? "이체" : categorize(memo, amount);
+  }
+  return "기타";
 };
 
+const formatDate8 = (d) =>
+  d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : d;
+
+// ── Context ────────────────────────────────────
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
@@ -74,29 +95,16 @@ export function DataProvider({ children }) {
   const [manualBalances, setManualBalances] = useState(() => {
     const saved = localStorage.getItem("manualBalances");
     return saved ? JSON.parse(saved) : {
-      // 은행
-      웰컴은행: 0,
-      사이다뱅크: 0,
-      하나멤버스: 0,
-      // 투자 예수금
-      NH_CMA: 0,
-      NH_ISA: 0,
-      토스증권: 0,
-      유안타: 0,
-      카카오페이증권: 0,
-      // 페이
-      네이버페이: 0,
-      카카오페이머니: 0,
+      웰컴은행: 0, 사이다뱅크: 0, 하나멤버스: 0,
+      NH_CMA: 0, NH_ISA: 0, 토스증권: 0, 유안타: 0, 카카오페이증권: 0,
+      네이버페이: 0, 카카오페이머니: 0,
     };
   });
-
-  // CODEF 연동 상태
-  const [isAutoMode, setIsAutoMode] = useState(false);
 
   const transactions = isDemoMode ? dummyTransactions : realTransactions;
   const accounts = isDemoMode ? dummyAccounts : realAccounts;
 
-  // ── 신한은행 파서 ──────────────────────────────
+  // ── 파서 ───────────────────────────────────────
   const parseShinhanCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
@@ -115,25 +123,21 @@ export function DataProvider({ children }) {
 
       if (index === 0) latestBalance = balance;
 
-      const formattedDate = date.length === 8
-        ? `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`
-        : date;
-
-      const isPaymentCharge = ["네이버페이충전", "네이버페이", "카카오페이", "현대카드", MY_NAME].some((k) => memo.includes(k));
-      const isPersonalTransfer = SHINHAN_TRANSFER_TYPES.includes(shinhanType) && amount < 0;
-      const transferCategory = getTransferCategory(memo, isPersonalTransfer);
-
-      const category = isPaymentCharge
-        ? "이체"
-        : transferCategory ?? categorize(memo, amount);
-
-      return { id: `real-${index}`, date: formattedDate, description: memo, category, amount, type: inAmt > 0 ? "입금" : "출금", account: "신한은행", balance };
+      return {
+        id: `real-${index}`,
+        date: formatDate8(date),
+        description: memo,
+        category: categorizeShinhan(shinhanType, memo, amount),
+        amount,
+        type: inAmt > 0 ? "입금" : "출금",
+        account: "신한은행",
+        balance,
+      };
     }).filter((t) => t.amount !== 0);
 
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // ── 카카오뱅크 파서 ────────────────────────────
   const parseKakaoBankCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
@@ -149,23 +153,25 @@ export function DataProvider({ children }) {
 
       if (index === 0) latestBalance = balance;
 
-      const formattedDate = date.length >= 8
-        ? `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`
-        : date;
-
       const isTransfer = txType.includes("이체") || txType.includes("일반입금");
-      // 카카오페이, 현대카드 등 명확한 이체는 무조건 이체로
       const isPaymentCharge = ["카카오페이", "현대카드", "네이버페이", MY_NAME].some((k) => memo.includes(k));
-      const transferCategory = isPaymentCharge ? "이체" : getTransferCategory(memo, isTransfer);
+      const transferCategory = isPaymentCharge ? "이체" : getTransferCategory(memo, isTransfer, amount);
       const category = transferCategory ?? categorize(memo, amount);
 
-      return { id: `kakao-${index}`, date: formattedDate, description: memo, category, amount, type: amount > 0 ? "입금" : "출금", account: "카카오뱅크" };
+      return {
+        id: `kakao-${index}`,
+        date: date.length >= 8 ? `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}` : date,
+        description: memo,
+        category,
+        amount,
+        type: amount > 0 ? "입금" : "출금",
+        account: "카카오뱅크",
+      };
     }).filter((t) => t.amount !== 0);
 
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // ── 토스뱅크 파서 ──────────────────────────────
   const parseTossBankCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
@@ -181,24 +187,29 @@ export function DataProvider({ children }) {
 
       if (index === 0) latestBalance = balance;
 
-      const formattedDate = date.slice(0, 10).replace(/\./g, "-");
       const isTransfer = ["이체", "송금"].some((k) => (cols[2] || "").includes(k));
-      const transferCategory = getTransferCategory(memo || cols[1], isTransfer);
+      const transferCategory = getTransferCategory(memo || cols[1], isTransfer, amount);
       const category = transferCategory ?? categorize(memo || cols[1], amount);
 
-      return { id: `toss-${index}`, date: formattedDate, description: memo || cols[1], category, amount, type: amount > 0 ? "입금" : "출금", account: "토스뱅크" };
+      return {
+        id: `toss-${index}`,
+        date: date.slice(0, 10).replace(/\./g, "-"),
+        description: memo || cols[1],
+        category,
+        amount,
+        type: amount > 0 ? "입금" : "출금",
+        account: "토스뱅크",
+      };
     }).filter((t) => t.amount !== 0);
 
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // ── 현대카드 파서 ──────────────────────────────
   const parseHyundaiCardCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
 
     const parsed = dataLines.map((line, index) => {
-      // 따옴표 안 쉼표 처리
       const cols = [];
       let current = "", inQuotes = false;
       for (const char of line) {
@@ -208,7 +219,6 @@ export function DataProvider({ children }) {
       }
       cols.push(current.trim());
 
-      const dateRaw = cols[0] || "";
       const memo = cols[4] || "";
       const amount = parseInt(cols[5]?.replace(/,/g, "") || "0");
       const installment = parseInt(cols[7] || "1");
@@ -216,15 +226,20 @@ export function DataProvider({ children }) {
 
       if (cols[10] === "취소") return null;
 
-      const formattedDate = dateRaw.replace("년 ", "-").replace("월 ", "-").replace("일", "").trim();
-
-      return { id: `hyundai-${index}`, date: formattedDate, description: memo, category: categorize(memo, -amount), amount: -monthlyAmount, type: "카드", account: "현대카드" };
+      return {
+        id: `hyundai-${index}`,
+        date: (cols[0] || "").replace("년 ", "-").replace("월 ", "-").replace("일", "").trim(),
+        description: memo,
+        category: categorize(memo, -amount),
+        amount: -monthlyAmount,
+        type: "카드",
+        account: "현대카드",
+      };
     }).filter((t) => t !== null && t.amount !== 0);
 
     return { transactions: parsed, balance: 0 };
   };
 
-  // ── 카카오페이 파서 ──────────────────────────────
   const parseKakaoPayCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
@@ -232,34 +247,20 @@ export function DataProvider({ children }) {
 
     const parsed = dataLines.map((line, index) => {
       const cols = line.split(",").map((c) => c.trim().replace(/"/g, ""));
-
-      // 카카오페이 컬럼 순서:
-      // 0: 거래일시, 1: 거래구분, 2: 거래금액, 3: 거래후잔액, 4: 은행, 5: 계좌정보/결제정보
-      const date = cols[0] || "";
       const txType = cols[1] || "";
       const amount = parseInt(cols[2]?.replace(/,/g, "") || "0");
       const balance = parseInt(cols[3]?.replace(/,/g, "") || "0");
       const memo = cols[5] || cols[4] || "";
-
-      latestBalance = balance;  // 매번 덮어써서 마지막 행 잔액 사용
-
-      // 날짜 형식 변환 (2026-04-01 18:04 → 2026-04-01)
-      const formattedDate = date.slice(0, 10);
-
-      // 거래구분으로 입출금 판별
-      // [-] 결제/출금 → 음수, [+] 충전/환급 → 양수
       const isDebit = txType.includes("[-]");
       const finalAmount = isDebit ? -amount : amount;
 
-      // 충전은 이체로 처리
-      const isCharge = txType.includes("충전");
-      const category = isCharge ? "이체" : categorize(memo, finalAmount);
+      latestBalance = balance;
 
       return {
         id: `kakaopay-${index}`,
-        date: formattedDate,
+        date: (cols[0] || "").slice(0, 10),
         description: memo || txType,
-        category,
+        category: txType.includes("충전") ? "이체" : categorize(memo, finalAmount),
         amount: finalAmount,
         type: isDebit ? "결제" : "충전",
         account: "카카오페이",
@@ -269,7 +270,6 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // ── 우리은행 파서 ──────────────────────────────
   const parseWooriBankCSV = (csvText) => {
     const lines = csvText.split("\n").filter((l) => l.trim());
     const dataLines = lines.slice(1);
@@ -285,25 +285,17 @@ export function DataProvider({ children }) {
       }
       cols.push(current.trim());
 
-      // 우리은행 컬럼 순서:
-      // 0: 거래일시, 1: 적요, 2: 월분, 3: 납입회차, 4: 기재내용
-      // 5: 찾으신금액, 6: 맡기신금액, 7: 거래후잔액, 8: 메모
-      const date = cols[0] || "";
       const memo = cols[4] || cols[1] || "";
       const outAmt = parseInt(cols[5]?.replace(/,/g, "") || "0");
       const inAmt = parseInt(cols[6]?.replace(/,/g, "") || "0");
       const balance = parseInt(cols[7]?.replace(/,/g, "") || "0");
       const amount = inAmt > 0 ? inAmt : -outAmt;
 
-      // 마지막 행 잔액을 현재 잔액으로 사용
       latestBalance = balance;
-
-      // 날짜 형식 변환 (2026.04.10 08:40 → 2026-04-10)
-      const formattedDate = date.slice(0, 10).replace(/\./g, "-");
 
       return {
         id: `woori-${index}`,
-        date: formattedDate,
+        date: (cols[0] || "").slice(0, 10).replace(/\./g, "-"),
         description: memo,
         category: categorize(memo, amount),
         amount,
@@ -315,7 +307,6 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: latestBalance };
   };
 
-  // ── 파서 선택 ──────────────────────────────────
   const parseCSV = (csvText, bankType) => {
     const parsers = {
       shinhan: parseShinhanCSV,
@@ -328,7 +319,6 @@ export function DataProvider({ children }) {
     return (parsers[bankType] || parseShinhanCSV)(csvText);
   };
 
-  // ── CSV 파일 읽기 ──────────────────────────────
   const loadCSVFile = (file, bankType) =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -353,14 +343,13 @@ export function DataProvider({ children }) {
     setIsDemoMode(false);
   };
 
-  // ── 더미 데이터 초기화 ─────────────────────────
   const resetToDemo = () => { setRealTransactions([]); setRealAccounts([]); setIsDemoMode(true); };
 
-  // ── CODEF API에서 실제 데이터 가져오기 ─────────
+  // ── CODEF API 연동 ─────────────────────────────
   const fetchFromCodef = async () => {
     try {
-      // 신한은행 계좌 조회
-      const res = await fetch("http://localhost:3000/api/accounts", {
+      // 1. 신한은행 계좌 조회
+      const accountRes = await fetch("http://localhost:3000/api/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -368,11 +357,80 @@ export function DataProvider({ children }) {
           organization: "0088",
         }),
       });
-      const data = await res.json();
-      console.log("CODEF 응답:", data);
-      return data;
+      const accountRaw = await accountRes.json();
+      const accountData = typeof accountRaw === "string" ? JSON.parse(accountRaw) : accountRaw;
+
+      if (accountData.result?.code !== "CF-00000") {
+        alert(`CODEF 계좌 오류: ${accountData.result?.message}`);
+        return;
+      }
+
+      const depositAccounts = accountData.data?.resDepositTrust || [];
+      const mainAccount = depositAccounts[0];
+
+      // 계좌 잔액 업데이트
+      if (mainAccount) {
+        const balance = parseInt(mainAccount.resAccountBalance || "0");
+        setRealAccounts((prev) => {
+          const exists = prev.find((a) => a.bank === "신한은행");
+          return exists
+            ? prev.map((a) => a.bank === "신한은행" ? { ...a, balance, accountNumber: mainAccount.resAccountDisplay } : a)
+            : [...prev, { id: "shinhan-codef", bank: "신한은행", type: "입출금", balance, accountNumber: mainAccount.resAccountDisplay }];
+        });
+      }
+
+      // 2. 거래내역 조회 (4월 1일부터)
+      if (!mainAccount) { alert("신한은행 입출금 계좌를 찾을 수 없어요."); return; }
+
+      const txRes = await fetch("http://localhost:3000/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
+          organization: "0088",
+          account: mainAccount.resAccount,
+          startDate: "20260401",
+          endDate: "20260502",
+        }),
+      });
+      const txRaw = await txRes.json();
+      const txData = typeof txRaw === "string" ? JSON.parse(txRaw) : txRaw;
+
+      if (txData.result?.code !== "CF-00000") {
+        alert(`CODEF 거래내역 오류: ${txData.result?.message}`);
+        return;
+      }
+
+      const txList = txData.data?.resTrHistoryList || [];
+      const parsed = txList.map((tx, index) => {
+        const amount = parseInt(tx.resAccountIn || "0") > 0
+          ? parseInt(tx.resAccountIn)
+          : -parseInt(tx.resAccountOut || "0");
+        const shinhanType = tx.resAccountDesc2 || "";
+        const memo = tx.resAccountDesc3 || "";
+
+        return {
+          id: `shinhan-codef-${index}`,
+          date: formatDate8(tx.resAccountTrDate || ""),
+          description: memo,
+          category: categorizeShinhan(shinhanType, memo, amount),
+          amount,
+          type: amount > 0 ? "입금" : "출금",
+          account: "신한은행",
+        };
+      }).filter((t) => t.amount !== 0);
+
+      setRealTransactions((prev) => {
+        const filtered = prev.filter((t) => !t.id.startsWith("shinhan-codef-"));
+        return [...filtered, ...parsed].sort((a, b) => new Date(b.date) - new Date(a.date));
+      });
+      setIsDemoMode(false);
+
+      alert(`신한은행 업데이트 완료!\n잔액: ${parseInt(mainAccount.resAccountBalance).toLocaleString("ko-KR")}원\n거래내역: ${parsed.length}건`);
+
     } catch (err) {
       console.error("CODEF API 오류:", err);
+      alert("CODEF API 연결 실패. 백엔드 서버가 실행 중인지 확인해주세요.");
     }
   };
 
@@ -381,12 +439,14 @@ export function DataProvider({ children }) {
     + (manualBalances.웰컴은행 || 0)
     + (manualBalances.사이다뱅크 || 0)
     + (manualBalances.하나멤버스 || 0);
+
   const totalInvestmentBalance = holdings.reduce((sum, h) => sum + (prices[h.code] || 0) * h.qty, 0)
     + (manualBalances.NH_CMA || 0)
     + (manualBalances.NH_ISA || 0)
     + (manualBalances.토스증권 || 0)
     + (manualBalances.유안타 || 0)
     + (manualBalances.카카오페이증권 || 0);
+
   const { start: thisMonthStart, end: thisMonthEnd } = getThisMonthRange();
 
   const thisMonthIncome = transactions
@@ -409,10 +469,8 @@ export function DataProvider({ children }) {
       totalBankBalance, thisMonthIncome, thisMonthExpense, totalInvestmentBalance,
       holdings, setHoldings, prices, setPrices,
       monthlyGoal, setMonthlyGoal,
-      manualBalances,
-      setManualBalances,
-      isAutoMode,
-      setIsAutoMode,
+      manualBalances, setManualBalances,
+      fetchFromCodef,
     }}>
       {children}
     </DataContext.Provider>
