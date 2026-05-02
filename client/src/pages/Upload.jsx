@@ -14,11 +14,29 @@ const bankOptions = [
   { key: "woori", label: "우리은행", available: true },
 ];
 
+{/* CODEF 자동 연동 */ }
+<div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+  <div>
+    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">자동 계좌 연동</p>
+    <p className="text-xs text-gray-400 mt-0.5">CODEF API를 통해 실시간으로 계좌 데이터를 가져옵니다</p>
+  </div>
+
+  <div className="flex items-center gap-3">
+    <button
+      onClick={fetchFromCodef}
+      className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
+    >
+      계좌 자동 연동
+    </button>
+    <p className="text-xs text-amber-500">데모 서비스 승인 후 사용 가능</p>
+  </div>
+</div>
+
 function Upload() {
   const {
     transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo,
     monthlyGoal, setMonthlyGoal,
-    manualBalances, setManualBalances,
+    manualBalances, setManualBalances, fetchFromCodef
   } = useData();
 
   // 목표 입력 상태
@@ -103,8 +121,8 @@ function Upload() {
 
       {/* 현재 모드 표시 배너 */}
       <div className={`rounded-2xl px-5 py-4 border ${isDemoMode
-          ? "bg-amber-50 dark:bg-amber-950 border-amber-100 dark:border-amber-900"
-          : "bg-lime-50 dark:bg-lime-950 border-lime-100 dark:border-lime-900"
+        ? "bg-amber-50 dark:bg-amber-950 border-amber-100 dark:border-amber-900"
+        : "bg-lime-50 dark:bg-lime-950 border-lime-100 dark:border-lime-900"
         }`}>
         <p className={`text-sm font-medium ${isDemoMode ? "text-amber-700 dark:text-amber-400" : "text-lime-700 dark:text-lime-400"}`}>
           {isDemoMode ? "Demo Mode" : "실제 데이터 모드"}
