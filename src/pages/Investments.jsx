@@ -107,9 +107,13 @@ function Investments() {
       }, 0);
 
   // 전체 투자 총액
-  const totalInvestment = holdings.reduce(
-    (sum, h) => sum + (prices[h.code] || 0) * h.qty, 0
-  );
+  const totalInvestment = Math.round(holdings.reduce(
+    (sum, h) => {
+      const price = prices[h.code] || 0;
+      const isUSD = !/^\d+$/.test(h.code) && !/^[A-Z0-9]{6,}$/.test(h.code);
+      return sum + (isUSD ? price * h.qty * exchangeRate : price * h.qty);
+    }, 0
+  ));
 
   // 수량 변경
   const handleQtyChange = (id, value) => {
@@ -164,7 +168,10 @@ function Investments() {
 
         {/* 총 수익 계산 */}
         {Object.keys(prices).length > 0 && (() => {
-          const totalCost = holdings.reduce((sum, h) => sum + h.avgPrice * h.qty, 0);
+          const totalCost = Math.round(holdings.reduce((sum, h) => {
+            const isUSD = !/^\d+$/.test(h.code) && !/^[A-Z0-9]{6,}$/.test(h.code);
+            return sum + (isUSD ? h.avgPrice * h.qty * exchangeRate : h.avgPrice * h.qty);
+          }, 0));
           const totalProfit = totalInvestment - totalCost;
           const totalRate = totalCost > 0 ? (totalProfit / totalCost * 100).toFixed(2) : 0;
           const isProfit = totalProfit >= 0;
