@@ -38,11 +38,15 @@ function Investments() {
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [editMode, setEditMode] = useState(false);  // 종목 편집 모드
+  const [exchangeRate, setExchangeRate] = useState(1450); // 기본값
 
   // Yahoo Finance API로 현재가 조회 (CORS 프록시 사용)
   const fetchPrice = async (code) => {
     try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}.KS`;
+      // 미국 주식(알파벳만)은 .KS 없이, 한국 주식은 .KS 붙이기
+      const isKorean = /^\d+$/.test(code) || /^[A-Z0-9]{6,}$/.test(code);
+      const symbol = isKorean ? `${code}.KS` : code;
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
       const res = await fetch(proxyUrl);
       const data = await res.json();
@@ -53,11 +57,27 @@ function Investments() {
     }
   };
 
+  // 달러/원 환율 조회
+  const fetchExchangeRate = async () => {
+    try {
+      const url = "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X";
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      const data = await res.json();
+      const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (rate) setExchangeRate(rate);
+    } catch {
+      console.error("환율 조회 실패");
+    }
+  };
+
   // 모든 종목 시세 조회
   const fetchAllPrices = async () => {
     setLoading(true);
-    const newPrices = {};
+    // 환율 먼저 조회
+    await fetchExchangeRate();
 
+    const newPrices = {};
     for (const h of holdings) {
       const price = await fetchPrice(h.code);
       if (price) newPrices[h.code] = price;
@@ -80,7 +100,11 @@ function Investments() {
   const accountTotal = (accountName) =>
     holdings
       .filter((h) => h.account === accountName)
-      .reduce((sum, h) => sum + (prices[h.code] || 0) * h.qty, 0);
+      .reduce((sum, h) => {
+        const price = prices[h.code] || 0;
+        const isUSD = !/^\d+$/.test(h.code) && !/^[A-Z0-9]{6,}$/.test(h.code);
+        return sum + (isUSD ? Math.round(price * h.qty * exchangeRate) : price * h.qty);
+      }, 0);
 
   // 전체 투자 총액
   const totalInvestment = holdings.reduce(
@@ -180,7 +204,10 @@ function Investments() {
               {Object.keys(prices).length > 0 && (() => {
                 const cost = holdings
                   .filter((h) => h.account === accountName)
-                  .reduce((sum, h) => sum + h.avgPrice * h.qty, 0);
+                  .reduce((sum, h) => {
+                    const isUSD = !/^\d+$/.test(h.code) && !/^[A-Z0-9]{6,}$/.test(h.code);
+                    return sum + (isUSD ? Math.round(h.avgPrice * h.qty * exchangeRate) : h.avgPrice * h.qty);
+                  }, 0);
                 const profit = accountTotal(accountName) - cost;
                 const rate = cost > 0 ? (profit / cost * 100).toFixed(2) : 0;
                 const isProfit = profit >= 0;
@@ -199,7 +226,13 @@ function Investments() {
               .filter((h) => h.account === accountName)
               .map((h) => {
                 const currentPrice = prices[h.code];
-                const evalAmount = currentPrice ? currentPrice * h.qty : null;
+                // 미국 주식(숫자 아닌 코드)은 환율 적용
+                const isUSD = !/^\d+$/.test(h.code) && !/^[A-Z0-9]{6,}$/.test(h.code);
+                const evalAmount = currentPrice
+                  ? isUSD
+                    ? Math.round(currentPrice * h.qty * exchangeRate)
+                    : currentPrice * h.qty
+                  : null;
 
                 // 후
                 return (
@@ -220,8 +253,11 @@ function Investments() {
 
                       {/* 수익률 + 수익금액 */}
                       {currentPrice && (() => {
+                        // 미국 주식은 매입가도 달러 기준, 수익도 원화로 환산
                         const profitRate = ((currentPrice - h.avgPrice) / h.avgPrice * 100).toFixed(2);
-                        const profitAmt = (currentPrice - h.avgPrice) * h.qty;
+                        const profitAmt = isUSD
+                          ? Math.round((currentPrice - h.avgPrice) * h.qty * exchangeRate)
+                          : (currentPrice - h.avgPrice) * h.qty;
                         const isProfit = profitAmt >= 0;
                         return (
                           <p className={`text-xs font-medium mt-0.5 ${isProfit ? "text-rose-500" : "text-blue-500"}`}>
@@ -304,8 +340,9 @@ function Investments() {
               <input
                 type="number"
                 placeholder="매입가"
+                step="0.01"
                 value={h.avgPrice}
-                onChange={(e) => setHoldings((prev) => prev.map((item) => item.id === h.id ? { ...item, avgPrice: parseInt(e.target.value) || 0 } : item))}
+                onChange={(e) => setHoldings((prev) => prev.map((item) => item.id === h.id ? { ...item, avgPrice: parseFloat(e.target.value) || 0 } : item))}
                 className="w-24 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 outline-none"
               />
               {/* 삭제 */}

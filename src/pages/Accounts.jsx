@@ -28,6 +28,12 @@ function Accounts() {
           name === "유안타" ? (manualBalances.유안타 || 0) : 0
     ),
   }));
+  // 수동 입력 투자 계좌 (종목 없이 예수금만 있는 경우)
+  const manualInvestmentAccounts = [
+    ["토스증권", "토스증권"],
+    ["카카오페이증권", "카카오페이 증권"],
+  ].filter(([key]) => manualBalances[key] > 0 && !holdings.some((h) => h.account === key))
+    .map(([key, label]) => ({ id: key, platform: label, balance: manualBalances[key] }));
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
 
@@ -40,6 +46,7 @@ function Accounts() {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">은행 계좌</h2>
         <div className="space-y-1">
+          {/* CSV 연동 계좌 */}
           {accounts.filter((acc) => acc.type !== "카드" && acc.type !== "저축").map((acc) => (
             <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div>
@@ -49,6 +56,20 @@ function Accounts() {
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatKRW(acc.balance)}</p>
             </div>
           ))}
+
+          {/* 수동 입력 은행 계좌 */}
+          {[["웰컴은행", "웰컴은행"], ["사이다뱅크", "사이다뱅크"], ["하나멤버스", "하나멤버스"]]
+            .filter(([key]) => manualBalances[key] > 0)
+            .map(([key, label]) => (
+              <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
+                <div>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
+                  <p className="text-xs text-gray-400">입출금 · 수동 입력</p>
+                </div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatKRW(manualBalances[key])}</p>
+              </div>
+            ))
+          }
         </div>
       </div>
 
@@ -74,8 +95,8 @@ function Accounts() {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">투자 계좌</h2>
         <div className="space-y-1">
-          {investmentAccounts.length > 0 ? (
-            investmentAccounts.map((inv) => (
+          {[...investmentAccounts, ...manualInvestmentAccounts].length > 0 ? (
+            [...investmentAccounts, ...manualInvestmentAccounts].map((inv) => (
               <div key={inv.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{inv.platform}</p>

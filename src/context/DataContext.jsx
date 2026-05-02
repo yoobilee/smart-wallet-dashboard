@@ -77,6 +77,7 @@ export function DataProvider({ children }) {
       // 은행
       웰컴은행: 0,
       사이다뱅크: 0,
+      하나멤버스: 0,
       // 투자 예수금
       NH_CMA: 0,
       NH_ISA: 0,
@@ -355,7 +356,8 @@ export function DataProvider({ children }) {
   // ── 계산 ───────────────────────────────────────
   const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
     + (manualBalances.웰컴은행 || 0)
-    + (manualBalances.사이다뱅크 || 0);
+    + (manualBalances.사이다뱅크 || 0)
+    + (manualBalances.하나멤버스 || 0);
   const totalInvestmentBalance = holdings.reduce((sum, h) => sum + (prices[h.code] || 0) * h.qty, 0)
     + (manualBalances.NH_CMA || 0)
     + (manualBalances.NH_ISA || 0)

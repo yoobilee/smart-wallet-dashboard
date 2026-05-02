@@ -6,12 +6,12 @@ import { useState } from "react";
 import { useData } from "../context/DataContext";
 
 const bankOptions = [
-  { key: "shinhan",  label: "신한은행",   available: true  },
-  { key: "kakao",    label: "카카오뱅크",  available: true  },
-  { key: "toss",     label: "토스뱅크",   available: true  },
-  { key: "hyundai",  label: "현대카드",   available: true  },
-  { key: "kakaopay", label: "카카오페이",  available: true  },
-  { key: "woori",    label: "우리은행",   available: true  },
+  { key: "shinhan", label: "신한은행", available: true },
+  { key: "kakao", label: "카카오뱅크", available: true },
+  { key: "toss", label: "토스뱅크", available: true },
+  { key: "hyundai", label: "현대카드", available: true },
+  { key: "kakaopay", label: "카카오페이", available: true },
+  { key: "woori", label: "우리은행", available: true },
 ];
 
 function Upload() {
@@ -26,14 +26,15 @@ function Upload() {
 
   // 수동 잔고 입력 상태
   const [manualInputs, setManualInputs] = useState({
-    웰컴은행:       manualBalances.웰컴은행       > 0 ? manualBalances.웰컴은행.toString()       : "",
-    사이다뱅크:     manualBalances.사이다뱅크     > 0 ? manualBalances.사이다뱅크.toString()     : "",
-    NH_CMA:         manualBalances.NH_CMA         > 0 ? manualBalances.NH_CMA.toString()         : "",
-    NH_ISA:         manualBalances.NH_ISA         > 0 ? manualBalances.NH_ISA.toString()         : "",
-    토스증권:       manualBalances.토스증권       > 0 ? manualBalances.토스증권.toString()       : "",
-    유안타:         manualBalances.유안타         > 0 ? manualBalances.유안타.toString()         : "",
+    웰컴은행: manualBalances.웰컴은행 > 0 ? manualBalances.웰컴은행.toString() : "",
+    사이다뱅크: manualBalances.사이다뱅크 > 0 ? manualBalances.사이다뱅크.toString() : "",
+    하나멤버스: manualBalances.하나멤버스 > 0 ? manualBalances.하나멤버스.toString() : "",
+    NH_CMA: manualBalances.NH_CMA > 0 ? manualBalances.NH_CMA.toString() : "",
+    NH_ISA: manualBalances.NH_ISA > 0 ? manualBalances.NH_ISA.toString() : "",
+    토스증권: manualBalances.토스증권 > 0 ? manualBalances.토스증권.toString() : "",
+    유안타: manualBalances.유안타 > 0 ? manualBalances.유안타.toString() : "",
     카카오페이증권: manualBalances.카카오페이증권 > 0 ? manualBalances.카카오페이증권.toString() : "",
-    네이버페이:     manualBalances.네이버페이     > 0 ? manualBalances.네이버페이.toString()     : "",
+    네이버페이: manualBalances.네이버페이 > 0 ? manualBalances.네이버페이.toString() : "",
     카카오페이머니: manualBalances.카카오페이머니 > 0 ? manualBalances.카카오페이머니.toString() : "",
   });
   const [manualSaved, setManualSaved] = useState(false);
@@ -58,7 +59,7 @@ function Upload() {
           id: selectedBank,
           bank: bankOptions.find((b) => b.key === selectedBank)?.label,
           type: selectedBank === "hyundai" ? "카드"
-              : selectedBank === "woori"   ? "저축"
+            : selectedBank === "woori" ? "저축"
               : "입출금",
           balance,
           accountNumber: "****-****-****",
@@ -77,14 +78,15 @@ function Upload() {
 
   const handleManualSave = () => {
     setManualBalances({
-      웰컴은행:       parseInt(manualInputs.웰컴은행       || "0"),
-      사이다뱅크:     parseInt(manualInputs.사이다뱅크     || "0"),
-      NH_CMA:         parseInt(manualInputs.NH_CMA         || "0"),
-      NH_ISA:         parseInt(manualInputs.NH_ISA         || "0"),
-      토스증권:       parseInt(manualInputs.토스증권       || "0"),
-      유안타:         parseInt(manualInputs.유안타         || "0"),
+      웰컴은행: parseInt(manualInputs.웰컴은행 || "0"),
+      사이다뱅크: parseInt(manualInputs.사이다뱅크 || "0"),
+      하나멤버스: parseInt(manualInputs.하나멤버스 || "0"),
+      NH_CMA: parseInt(manualInputs.NH_CMA || "0"),
+      NH_ISA: parseInt(manualInputs.NH_ISA || "0"),
+      토스증권: parseInt(manualInputs.토스증권 || "0"),
+      유안타: parseInt(manualInputs.유안타 || "0"),
       카카오페이증권: parseInt(manualInputs.카카오페이증권 || "0"),
-      네이버페이:     parseInt(manualInputs.네이버페이     || "0"),
+      네이버페이: parseInt(manualInputs.네이버페이 || "0"),
       카카오페이머니: parseInt(manualInputs.카카오페이머니 || "0"),
     });
     setManualSaved(true);
@@ -100,11 +102,10 @@ function Upload() {
       </div>
 
       {/* 현재 모드 표시 배너 */}
-      <div className={`rounded-2xl px-5 py-4 border ${
-        isDemoMode
+      <div className={`rounded-2xl px-5 py-4 border ${isDemoMode
           ? "bg-amber-50 dark:bg-amber-950 border-amber-100 dark:border-amber-900"
           : "bg-lime-50 dark:bg-lime-950 border-lime-100 dark:border-lime-900"
-      }`}>
+        }`}>
         <p className={`text-sm font-medium ${isDemoMode ? "text-amber-700 dark:text-amber-400" : "text-lime-700 dark:text-lime-400"}`}>
           {isDemoMode ? "Demo Mode" : "실제 데이터 모드"}
         </p>
@@ -181,7 +182,7 @@ function Upload() {
         {/* 은행 */}
         <div className="space-y-2">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400">은행</p>
-          {[["웰컴은행", "웰컴은행"], ["사이다뱅크", "사이다뱅크"]].map(([key, label]) => (
+          {[["웰컴은행", "웰컴은행"], ["사이다뱅크", "사이다뱅크"], ["하나멤버스", "하나멤버스"]].map(([key, label]) => (
             <div key={key} className="flex items-center gap-3">
               <p className="text-sm text-gray-700 dark:text-gray-300 w-28">{label}</p>
               <input
@@ -200,10 +201,10 @@ function Upload() {
         <div className="space-y-2">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400">투자 예수금</p>
           {[
-            ["NH_CMA",         "NH CMA"],
-            ["NH_ISA",         "NH ISA"],
-            ["토스증권",       "토스증권"],
-            ["유안타",         "유안타"],
+            ["NH_CMA", "NH CMA"],
+            ["NH_ISA", "NH ISA"],
+            ["토스증권", "토스증권"],
+            ["유안타", "유안타"],
             ["카카오페이증권", "카카오페이 증권"],
           ].map(([key, label]) => (
             <div key={key} className="flex items-center gap-3">
@@ -224,7 +225,7 @@ function Upload() {
         <div className="space-y-2">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400">페이</p>
           {[
-            ["네이버페이",     "네이버페이"],
+            ["네이버페이", "네이버페이"],
             ["카카오페이머니", "카카오페이 머니"],
           ].map(([key, label]) => (
             <div key={key} className="flex items-center gap-3">
