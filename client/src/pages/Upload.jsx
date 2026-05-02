@@ -14,30 +14,8 @@ const bankOptions = [
   { key: "woori", label: "우리은행", available: true },
 ];
 
-{/* CODEF 자동 연동 */ }
-<div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
-  <div>
-    <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">자동 계좌 연동</p>
-    <p className="text-xs text-gray-400 mt-0.5">CODEF API를 통해 실시간으로 계좌 데이터를 가져옵니다</p>
-  </div>
-
-  <div className="flex items-center gap-3">
-    <button
-      onClick={fetchFromCodef}
-      className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
-    >
-      계좌 자동 연동
-    </button>
-    <p className="text-xs text-amber-500">데모 서비스 승인 후 사용 가능</p>
-  </div>
-</div>
-
 function Upload() {
-  const {
-    transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo,
-    monthlyGoal, setMonthlyGoal,
-    manualBalances, setManualBalances, fetchFromCodef
-  } = useData();
+  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal, manualBalances, setManualBalances, fetchFromCodef } = useData();
 
   // 목표 입력 상태
   const [goalInput, setGoalInput] = useState(monthlyGoal > 0 ? monthlyGoal.toString() : "");
@@ -133,6 +111,22 @@ function Upload() {
             : `총 ${transactions.length}건의 거래내역이 로드되었어요.`
           }
         </p>
+      </div>
+
+      {/* CODEF 자동 연동 */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
+        <div>
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">자동 계좌 연동</p>
+          <p className="text-xs text-gray-400 mt-0.5">CODEF API를 통해 실시간으로 계좌 데이터를 가져옵니다</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={fetchFromCodef}
+            className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
+          >
+            계좌 자동 연동
+          </button>
+        </div>
       </div>
 
       {/* 은행/카드 CSV 업로드 */}
