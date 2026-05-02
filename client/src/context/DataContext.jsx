@@ -8,6 +8,9 @@ import { transactions as dummyTransactions, accounts as dummyAccounts } from "..
 // ── 상수 ───────────────────────────────────────
 const MY_NAME = "이유비";
 const SHINHAN_TRANSFER_TYPES = ["모바일", "타행IB", "FB이체"];
+const CODEF_START_DATE = "20260401";
+const CODEF_END_DATE = "20260502";
+const BACKEND_URL = "http://localhost:3000";
 
 const CATEGORY_KEYWORDS = {
   카페: ["스타벅스", "커피", "카페", "이디야", "빽다방", "메가커피", "투썸", "할리스", "폴바셋", "커피빈", "엔젤리너스", "뚜레쥬르", "파리바게뜨", "던킨", "논오프", "공차", "더벤티", "매머드커피", "블루보틀", "디저트", "베이커리", "하이오커피", "빙수", "케이크"],
@@ -22,14 +25,14 @@ const CATEGORY_KEYWORDS = {
   이체: ["네이버페이충전", "네이버페이", "카카오페이", "토스", "페이코", "FB이체", "타행이체", "CD송금", "현대카드", "신한카드", "삼성카드", "KB카드", "롯데카드", "우리카드", "이유비"],
 };
 
-// ── 순수 함수 (컴포넌트 밖) ───────────────────
+// ── 순수 함수 ──────────────────────────────────
 const categorize = (description, amount) => {
   const d = description || "";
   if (amount > 0) {
     if (d.includes("급여") || d.includes("월급")) return "수입";
     if (d.includes("이자")) return "수입";
     if (d.includes("컴즈")) return "수입";
-    return "수입";  // 이체 판별은 각 파서에서 처리하므로 여기까지 오면 수입
+    return "수입";
   }
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (keywords.some((k) => d.includes(k))) return category;
@@ -39,11 +42,7 @@ const categorize = (description, amount) => {
 
 const getTransferCategory = (memo, isTransfer, amount) => {
   if (!isTransfer) return null;
-  if (amount > 0) {
-    // 입금 이체: 본인 이름이면 이체, 아니면 수입
-    return memo.includes(MY_NAME) ? "이체" : null; // null이면 categorize로 넘어가 수입 처리
-  }
-  // 출금 이체: 본인 이름이면 이체, 아니면 지출이체
+  if (amount > 0) return memo.includes(MY_NAME) ? "이체" : null;
   return memo.includes(MY_NAME) ? "이체" : "지출이체";
 };
 
@@ -58,9 +57,7 @@ const getThisMonthRange = () => {
   };
 };
 
-// 신한은행 공통 카테고리 분류 (CSV 파서 + CODEF 공유)
 const categorizeShinhan = (shinhanType, memo, amount) => {
-  // 출금: 페이충전/카드결제/본인이체 → 이체, 타인이체 → 지출이체
   if (amount < 0) {
     const isPaymentCharge = ["네이버페이충전", "네이버페이", "카카오페이", "현대카드", MY_NAME].some((k) => memo.includes(k));
     const isPersonalTransfer = SHINHAN_TRANSFER_TYPES.includes(shinhanType);
@@ -75,7 +72,21 @@ const categorizeShinhan = (shinhanType, memo, amount) => {
 };
 
 const formatDate8 = (d) =>
-  d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : d;
+  d?.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : (d || "");
+
+// CODEF 응답 파싱 헬퍼
+const parseCodefResponse = (raw) =>
+  typeof raw === "string" ? JSON.parse(raw) : raw;
+
+// CODEF API POST 헬퍼
+const codefPost = async (endpoint, body) => {
+  const res = await fetch(`${BACKEND_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  return parseCodefResponse(await res.json());
+};
 
 // ── Context ────────────────────────────────────
 const DataContext = createContext(null);
@@ -349,16 +360,10 @@ export function DataProvider({ children }) {
   const fetchFromCodef = async () => {
     try {
       // 1. 신한은행 계좌 조회
-      const accountRes = await fetch("http://localhost:3000/api/accounts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
-          organization: "0088",
-        }),
+      const accountData = await codefPost("/api/accounts", {
+        connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
+        organization: "0088",
       });
-      const accountRaw = await accountRes.json();
-      const accountData = typeof accountRaw === "string" ? JSON.parse(accountRaw) : accountRaw;
 
       if (accountData.result?.code !== "CF-00000") {
         alert(`CODEF 계좌 오류: ${accountData.result?.message}`);
@@ -368,33 +373,25 @@ export function DataProvider({ children }) {
       const depositAccounts = accountData.data?.resDepositTrust || [];
       const mainAccount = depositAccounts[0];
 
-      // 계좌 잔액 업데이트
-      if (mainAccount) {
-        const balance = parseInt(mainAccount.resAccountBalance || "0");
-        setRealAccounts((prev) => {
-          const exists = prev.find((a) => a.bank === "신한은행");
-          return exists
-            ? prev.map((a) => a.bank === "신한은행" ? { ...a, balance, accountNumber: mainAccount.resAccountDisplay } : a)
-            : [...prev, { id: "shinhan-codef", bank: "신한은행", type: "입출금", balance, accountNumber: mainAccount.resAccountDisplay }];
-        });
-      }
-
-      // 2. 거래내역 조회 (4월 1일부터)
       if (!mainAccount) { alert("신한은행 입출금 계좌를 찾을 수 없어요."); return; }
 
-      const txRes = await fetch("http://localhost:3000/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
-          organization: "0088",
-          account: mainAccount.resAccount,
-          startDate: "20260401",
-          endDate: "20260502",
-        }),
+      // 신한은행 잔액 업데이트
+      const shinhanBalance = parseInt(mainAccount.resAccountBalance || "0");
+      setRealAccounts((prev) => {
+        const exists = prev.find((a) => a.bank === "신한은행");
+        return exists
+          ? prev.map((a) => a.bank === "신한은행" ? { ...a, balance: shinhanBalance, accountNumber: mainAccount.resAccountDisplay } : a)
+          : [...prev, { id: "shinhan-codef", bank: "신한은행", type: "입출금", balance: shinhanBalance, accountNumber: mainAccount.resAccountDisplay }];
       });
-      const txRaw = await txRes.json();
-      const txData = typeof txRaw === "string" ? JSON.parse(txRaw) : txRaw;
+
+      // 2. 신한은행 거래내역 조회
+      const txData = await codefPost("/api/transactions", {
+        connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
+        organization: "0088",
+        account: mainAccount.resAccount,
+        startDate: CODEF_START_DATE,
+        endDate: CODEF_END_DATE,
+      });
 
       if (txData.result?.code !== "CF-00000") {
         alert(`CODEF 거래내역 오류: ${txData.result?.message}`);
@@ -402,7 +399,7 @@ export function DataProvider({ children }) {
       }
 
       const txList = txData.data?.resTrHistoryList || [];
-      const parsed = txList.map((tx, index) => {
+      const parsedShinhan = txList.map((tx, index) => {
         const amount = parseInt(tx.resAccountIn || "0") > 0
           ? parseInt(tx.resAccountIn)
           : -parseInt(tx.resAccountOut || "0");
@@ -422,11 +419,56 @@ export function DataProvider({ children }) {
 
       setRealTransactions((prev) => {
         const filtered = prev.filter((t) => !t.id.startsWith("shinhan-codef-"));
-        return [...filtered, ...parsed].sort((a, b) => new Date(b.date) - new Date(a.date));
+        return [...filtered, ...parsedShinhan].sort((a, b) => new Date(b.date) - new Date(a.date));
       });
       setIsDemoMode(false);
 
-      alert(`신한은행 업데이트 완료!\n잔액: ${parseInt(mainAccount.resAccountBalance).toLocaleString("ko-KR")}원\n거래내역: ${parsed.length}건`);
+      // 3. 현대카드 승인내역 조회
+      const cardData = await codefPost("/api/card-transactions", {
+        connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_HYUNDAI,
+        organization: "0302",
+        startDate: CODEF_START_DATE,
+        endDate: CODEF_END_DATE,
+        cardNo: import.meta.env.VITE_CODEF_CARD_NO_HYUNDAI,
+        cardPassword: import.meta.env.VITE_CODEF_CARD_PW_HYUNDAI,
+      });
+
+      let parsedCard = [];
+      if (cardData.result?.code === "CF-00000") {
+        const cardList = Array.isArray(cardData.data) ? cardData.data : [];
+
+        parsedCard = cardList
+          .filter((tx) => tx.resCancelYN !== "1")
+          .map((tx, index) => {
+            const amount = parseInt(tx.resUsedAmount || "0");
+            const installment = parseInt(tx.resInstallmentMonth || "1");
+            const monthlyAmt = installment > 1 ? Math.round(amount / installment) : amount;
+            const memo = tx.resMemberStoreName || "";
+
+            return {
+              id: `hyundai-codef-${index}`,
+              date: formatDate8(tx.resUsedDate || ""),
+              description: memo,
+              category: categorize(memo, -monthlyAmt),
+              amount: -monthlyAmt,
+              type: "카드",
+              account: "현대카드",
+            };
+          }).filter((t) => t.amount !== 0);
+
+        setRealTransactions((prev) => {
+          const filtered = prev.filter((t) => !t.id.startsWith("hyundai-codef-"));
+          return [...filtered, ...parsedCard].sort((a, b) => new Date(b.date) - new Date(a.date));
+        });
+        setRealAccounts((prev) => {
+          const exists = prev.find((a) => a.bank === "현대카드");
+          return exists
+            ? prev
+            : [...prev, { id: "hyundai-codef", bank: "현대카드", type: "카드", balance: 0, accountNumber: "****-****-****" }];
+        });
+      }
+
+      alert(`업데이트 완료!\n신한은행 잔액: ${shinhanBalance.toLocaleString("ko-KR")}원\n신한은행 거래내역: ${parsedShinhan.length}건\n현대카드: ${parsedCard.length}건`);
 
     } catch (err) {
       console.error("CODEF API 오류:", err);
@@ -454,7 +496,13 @@ export function DataProvider({ children }) {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const thisMonthExpense = transactions
-    .filter((t) => t.amount < 0 && t.category !== "투자" && t.category !== "이체" && t.account !== "현대카드" && t.date >= thisMonthStart && t.date <= thisMonthEnd)
+    .filter((t) =>
+      t.amount < 0 &&
+      t.category !== "투자" &&
+      t.category !== "이체" &&
+      t.date >= thisMonthStart &&
+      t.date <= thisMonthEnd
+    )
     .reduce((sum, t) => sum + t.amount, 0);
 
   // ── localStorage 동기화 ────────────────────────

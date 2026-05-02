@@ -37,8 +37,8 @@ const getTransactions = async (connectedId, organization, account, startDate, en
     account,
     startDate,
     endDate,
-    orderBy:      "0",  // 0: 최신순
-    inquiryType:  "0",  // 0: 전체
+    orderBy: "0",  // 0: 최신순
+    inquiryType: "0",  // 0: 전체
     countPerPage: "100",
   };
 
@@ -55,21 +55,63 @@ const getTransactions = async (connectedId, organization, account, startDate, en
 // 새 계좌 연동 시 사용
 const createAccount = async (organization, id, password) => {
   const accountList = [{
-    countryCode:  "KR",
+    countryCode: "KR",
     businessType: "BK",
-    clientType:   "P",
+    clientType: "P",
     organization,
-    loginType:    "1",
+    loginType: "1",
     id,
     password: EasyCodefUtil.encryptRSA(process.env.CODEF_PUBLIC_KEY, password),
   }];
 
   const result = await codef.createAccount(
-  EasyCodefConstant.SERVICE_TYPE_DEMO,
-  { accountList }
-);
+    EasyCodefConstant.SERVICE_TYPE_DEMO,
+    { accountList }
+  );
 
   return result;
 };
 
-module.exports = { getBankAccounts, getTransactions, createAccount };
+const createCardAccount = async (organization, id, password, cardNo, cardPassword) => {
+  const accountList = [{
+    countryCode: "KR",
+    businessType: "CD",
+    clientType: "P",
+    organization,
+    loginType: "1",
+    id,
+    password: EasyCodefUtil.encryptRSA(process.env.CODEF_PUBLIC_KEY, password),
+    cardNo,
+    cardPassword: EasyCodefUtil.encryptRSA(process.env.CODEF_PUBLIC_KEY, cardPassword),
+  }];
+
+  const result = await codef.createAccount(
+    EasyCodefConstant.SERVICE_TYPE_DEMO,
+    { accountList }
+  );
+  return result;
+};
+
+// ── 카드 승인내역 조회 ──────────────────────────
+const getCardTransactions = async (connectedId, organization, startDate, endDate, cardNo, cardPassword) => {
+  const parameter = {
+    connectedId,
+    organization,
+    startDate,
+    endDate,
+    orderBy:      "0",
+    inquiryType:  "1",
+    ...(cardNo       && { cardNo }),
+    ...(cardPassword && { cardPassword: EasyCodefUtil.encryptRSA(process.env.CODEF_PUBLIC_KEY, cardPassword) }),
+  };
+
+  const result = await codef.requestProduct(
+    "/v1/kr/card/p/account/approval-list",
+    SERVICE_TYPE,
+    parameter
+  );
+
+  return result;
+};
+
+module.exports = { getBankAccounts, getTransactions, createAccount, createCardAccount, getCardTransactions };

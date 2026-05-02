@@ -3,12 +3,12 @@
 // =============================================
 
 const express = require("express");
-const cors    = require("cors");
+const cors = require("cors");
 require("dotenv").config();
 
-const { getBankAccounts, getTransactions, createAccount } = require("./codef");
+const { getBankAccounts, getTransactions, createAccount, createCardAccount, getCardTransactions } = require("./codef");
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── 미들웨어 ──────────────────────────────────
@@ -46,6 +46,27 @@ app.post("/api/transactions", async (req, res) => {
   try {
     const { connectedId, organization, account, startDate, endDate } = req.body;
     const result = await getTransactions(connectedId, organization, account, startDate, endDate);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 카드사 계정 등록
+app.post("/api/create-card-account", async (req, res) => {
+  try {
+    const { organization, id, password, cardNo, cardPassword } = req.body;
+    const result = await createCardAccount(organization, id, password, cardNo, cardPassword);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/card-transactions", async (req, res) => {
+  try {
+    const { connectedId, organization, startDate, endDate, cardNo, cardPassword } = req.body;
+const result = await getCardTransactions(connectedId, organization, startDate, endDate, cardNo, cardPassword);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
