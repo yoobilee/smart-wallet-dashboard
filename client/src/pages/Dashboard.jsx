@@ -179,7 +179,7 @@ function Dashboard() {
 
       {/* 이번 달 지출 목표 게이지 */}
       {monthlyGoal > 0 && (() => {
-        const spent = Math.abs(thisMonthExpense) + totalCardSpending;
+        const spent = Math.abs(thisMonthExpense);
         const ratio = Math.min((spent / monthlyGoal) * 100, 100);
         const overRatio = spent > monthlyGoal ? ((spent - monthlyGoal) / monthlyGoal) * 100 : 0;
         const isOver = spent > monthlyGoal;
