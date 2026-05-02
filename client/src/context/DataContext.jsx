@@ -90,6 +90,9 @@ export function DataProvider({ children }) {
     };
   });
 
+  // CODEF 연동 상태
+  const [isAutoMode, setIsAutoMode] = useState(false);
+
   const transactions = isDemoMode ? dummyTransactions : realTransactions;
   const accounts = isDemoMode ? dummyAccounts : realAccounts;
 
@@ -353,6 +356,26 @@ export function DataProvider({ children }) {
   // ── 더미 데이터 초기화 ─────────────────────────
   const resetToDemo = () => { setRealTransactions([]); setRealAccounts([]); setIsDemoMode(true); };
 
+  // ── CODEF API에서 실제 데이터 가져오기 ─────────
+  const fetchFromCodef = async () => {
+    try {
+      // 신한은행 계좌 조회
+      const res = await fetch("http://localhost:3000/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_SHINHAN,
+          organization: "0088",
+        }),
+      });
+      const data = await res.json();
+      console.log("CODEF 응답:", data);
+      return data;
+    } catch (err) {
+      console.error("CODEF API 오류:", err);
+    }
+  };
+
   // ── 계산 ───────────────────────────────────────
   const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
     + (manualBalances.웰컴은행 || 0)
@@ -388,6 +411,8 @@ export function DataProvider({ children }) {
       monthlyGoal, setMonthlyGoal,
       manualBalances,
       setManualBalances,
+      isAutoMode,
+      setIsAutoMode,
     }}>
       {children}
     </DataContext.Provider>
