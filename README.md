@@ -4,14 +4,13 @@
 
 ## 🛠 기술 스택
 
-**Frontend**
-- React + Vite + Tailwind CSS
-- Recharts (차트)
-- Yahoo Finance API (실시간 주식 시세)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
 
-**Backend** _(AI 도움을 받아 구현)_
-- Node.js + Express
-- CODEF API (은행 계좌 자동 연동)
+> 백엔드(Node.js/Express, CODEF API 연동)는 AI의 도움을 받아 구현했습니다.
 
 ## ✨ 주요 기능
 
