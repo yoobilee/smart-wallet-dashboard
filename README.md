@@ -1,42 +1,41 @@
-# 💳 Smart Wallet Dashboard
+# 💰 Smart Wallet Dashboard
 
-개인 자산을 한눈에 관리하는 웹 기반 금융 대시보드
-
-## 📌 프로젝트 소개
-
-토스, 뱅크샐러드 같은 자산관리 서비스는 모바일 전용이 대부분입니다.
-Smart Wallet Dashboard는 **PC 웹에서 미니멀하게 자산을 확인**할 수 있는 개인용 금융 대시보드입니다.
-
-## ✨ 주요 기능
-
-- **Overview** — 총 자산, 가용 자산 / 투자 자산 시각적 분리, 이번 달 수입·지출 요약
-- **Accounts** — 은행 계좌, 투자 계좌, 카드 목록 및 잔액 확인
-- **Transactions** — 전체 거래 내역, 카테고리 필터 및 검색
-- **Upload** — CSV 파일 업로드로 거래 내역 연동 (Phase 2: CODEF API 실시간 연동 예정)
+개인 자산을 한눈에 관리하는 대시보드입니다.
 
 ## 🛠 기술 스택
 
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-0F172A?style=for-the-badge&logo=tailwind-css&logoColor=38BDF8)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Yahoo Finance](https://img.shields.io/badge/Yahoo%20Finance-6001D2?style=for-the-badge&logo=yahoo&logoColor=white)
+**Frontend**
+- React + Vite + Tailwind CSS
+- Recharts (차트)
+- Yahoo Finance API (실시간 주식 시세)
 
-## 🚀 로컬 실행
+**Backend** _(AI 도움을 받아 구현)_
+- Node.js + Express
+- CODEF API (은행 계좌 자동 연동)
 
-```bash
-npm install
-npm run dev
-```
+## ✨ 주요 기능
 
-## 📂 프로젝트 구조
+- 📊 대시보드 - 총 자산, 이번 달 수입/지출, 지출 목표 게이지
+- 🏦 계좌 관리 - 은행/저축/투자/페이 계좌 통합 관리
+- 📋 거래내역 - 카테고리 자동 분류, 필터/정렬/검색
+- 📈 투자 - 실시간 주식 시세 + 환율 변환 (한국/미국 주식)
+- 📤 업로드 - CSV 파일 업로드 + CODEF API 자동 연동 + 수동 잔고 입력
 
-| 경로 | 설명 |
+## 🏦 지원 CSV 파일
+
+| 기관 | 형식 |
 |---|---|
-| `src/components/` | 재사용 UI 컴포넌트 (Sidebar 등) |
-| `src/pages/` | 각 페이지 (Dashboard, Accounts, Transactions, Upload) |
-| `src/data/` | 더미 데이터 |
-| `src/assets/` | 이미지 등 정적 파일 |
+| 신한은행 | txt (공백 구분) |
+| 카카오뱅크 | txt (공백 구분) |
+| 토스뱅크 | CSV |
+| 현대카드 | CSV |
+| 카카오페이 | CSV |
+| 우리은행 | CSV |
+
+## 🤖 CODEF API 자동 연동
+
+신한은행 계좌 잔액 및 거래내역 자동 동기화 지원.
+추후 카카오뱅크, 토스뱅크, 현대카드 연동 예정.
 
 ## 🗺 로드맵
 
@@ -53,11 +52,8 @@ npm run dev
 - [x] 이번 달 지출 목표 게이지
 - [x] Transactions 필터/정렬/검색 개선
 - [x] Vercel 배포
-- [ ] CODEF API 실시간 계좌 연동 (Phase 2)
-- [ ] 백엔드 서버 추가 - Node.js (Phase 2)
-- [ ] 한국투자증권 API 주식 자동 동기화 (Phase 2)
-- [ ] 네이버페이/카카오페이 거래내역 자동 동기화 (Phase 2)
-
----
-
-Developed by [Yoobi Lee](https://github.com/yoobilee)
+- [x] 백엔드 서버 (Node.js + Express)
+- [x] CODEF API 신한은행 자동 연동
+- [ ] 카카오뱅크/토스뱅크/현대카드 CODEF 연동
+- [ ] NH투자증권 연동
+- [ ] 네이버페이/카카오페이 거래내역 자동 동기화
