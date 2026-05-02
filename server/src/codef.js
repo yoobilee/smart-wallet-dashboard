@@ -9,12 +9,12 @@ const { EasyCodef, EasyCodefConstant, EasyCodefUtil } = require("easycodef-node"
 const codef = new EasyCodef();
 codef.setPublicKey(process.env.CODEF_PUBLIC_KEY);
 codef.setClientInfoForDemo(
-  process.env.CODEF_CLIENT_ID,
-  process.env.CODEF_CLIENT_SECRET
+  process.env.CODEF_DEMO_CLIENT_ID,
+  process.env.CODEF_DEMO_CLIENT_SECRET
 );
 
 // 데모 승인 후 SERVICE_TYPE_DEMO로 변경 예정
-const SERVICE_TYPE = EasyCodefConstant.SERVICE_TYPE_SANDBOX;
+const SERVICE_TYPE = EasyCodefConstant.SERVICE_TYPE_DEMO;
 
 // ── 계좌 목록 조회 ──────────────────────────
 const getBankAccounts = async (connectedId, organization) => {
@@ -62,9 +62,9 @@ const createAccount = async (organization, id, password) => {
   }];
 
   const result = await codef.createAccount(
-    EasyCodefConstant.SERVICE_TYPE_SANDBOX,
-    { accountList }
-  );
+  EasyCodefConstant.SERVICE_TYPE_DEMO,
+  { accountList }
+);
 
   return result;
 };
