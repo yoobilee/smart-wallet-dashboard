@@ -9,19 +9,22 @@ import { transactions as dummyTransactions, accounts as dummyAccounts } from "..
 const MY_NAME = "이유비";
 const SHINHAN_TRANSFER_TYPES = ["모바일", "타행IB", "FB이체"];
 const CODEF_START_DATE = "20260401";
-const CODEF_END_DATE = "20260502";
+const getCodefEndDate  = () => {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+};
 const BACKEND_URL = "http://localhost:3000";
 
 const CATEGORY_KEYWORDS = {
   카페: ["스타벅스", "커피", "카페", "이디야", "빽다방", "메가커피", "투썸", "할리스", "폴바셋", "커피빈", "엔젤리너스", "뚜레쥬르", "파리바게뜨", "던킨", "논오프", "공차", "더벤티", "매머드커피", "블루보틀", "디저트", "베이커리", "하이오커피", "빙수", "케이크"],
-  식비: ["식당", "맥도날드", "버거킹", "롯데리아", "KFC", "맘스터치", "배달", "요기요", "배민", "쿠팡이츠", "김밥", "피자", "팔로피자", "도미노", "파파존스", "BBQ", "굽네", "BHC", "교촌", "서브웨이", "샌드위치", "포케", "초밥", "스시", "일식", "중식", "한식", "분식", "국밥", "칼국수", "냉면", "떡볶이", "치킨", "삼겹살", "고기", "식자재", "뉴월드", "마트", "배스킨", "아이스크림", "버거", "도넛"],
+  식비: ["식당", "맥도날드", "버거킹", "롯데리아", "KFC", "맘스터치", "배달", "요기요", "배민", "쿠팡이츠", "김밥", "피자", "팔로피자", "도미노", "파파존스", "BBQ", "굽네", "BHC", "교촌", "서브웨이", "샌드위치", "포케", "초밥", "스시", "일식", "중식", "한식", "분식", "국밥", "칼국수", "냉면", "떡볶이", "치킨", "삼겹살", "고기", "식자재", "뉴월드", "마트", "배스킨", "아이스크림", "버거", "도넛", "우아한형제"],
   편의점: ["GS25", "CU", "세븐일레븐", "이마트24", "미니스톱", "코리아세븐", "씨유"],
   쇼핑: ["쿠팡", "올리브영", "무신사", "지그재그", "마켓컬리", "SSG", "11번가", "G마켓", "옥션", "위메프", "티몬", "다이소", "아성", "이케아", "자라", "유니클로", "H&M", "에이블리", "브랜디", "롯데마트", "이마트", "홈플러스", "코스트코", "트레이더스", "계란", "무인", "슈퍼", "시장"],
   교통: ["교통", "버스", "지하철", "택시", "카카오택시", "우버", "티머니", "기차", "KTX", "SRT", "코레일", "항공", "공항", "주유", "주차", "톨게이트", "하이패스"],
   구독: ["넷플릭스", "유튜브", "스포티파이", "왓챠", "웨이브", "애플", "구글", "네이버플러스", "멜론", "지니", "디즈니", "라프텔", "밀리의서재", "리디", "GamsGo", "멤버스", "membership", "카카오 - 주식회사", "이모티콘"],
   의료: ["병원", "약국", "의원", "클리닉", "치과", "한의원", "피부과", "안과", "정형외과", "내과", "외과", "산부인과", "소아과", "약", "의료", "건강"],
   생활: ["런드리", "세탁", "클리닝", "청소", "수선", "미용", "헤어", "네일", "마사지", "스파"],
-  투자: ["증권", "투자", "펀드", "ETF", "주식", "NH투자", "미래에셋", "삼성증권", "키움", "신한투자", "KB증권"],
+  투자: ["증권","펀드","ETF","NH투자","미래에셋","삼성증권","키움","신한투자","KB증권"],
   이체: ["네이버페이충전", "네이버페이", "카카오페이", "토스", "페이코", "FB이체", "타행이체", "CD송금", "현대카드", "신한카드", "삼성카드", "KB카드", "롯데카드", "우리카드", "이유비"],
 };
 
@@ -345,7 +348,7 @@ export function DataProvider({ children }) {
       const memo = cols[8] || cols[5] || "";
       const amount = inAmt > 0 ? inAmt : -outAmt;
 
-      latestBalance = balance;
+      if (index === 0) latestBalance = balance;  // 첫 번째 행(최신) 잔액 사용
 
       const formattedDate = date.slice(0, 10).replace(/\./g, "-");
 
@@ -441,7 +444,7 @@ export function DataProvider({ children }) {
         organization: "0088",
         account: mainAccount.resAccount,
         startDate: CODEF_START_DATE,
-        endDate: CODEF_END_DATE,
+        endDate: getCodefEndDate(),
       });
 
       if (txData.result?.code !== "CF-00000") {
@@ -479,7 +482,7 @@ export function DataProvider({ children }) {
         connectedId: import.meta.env.VITE_CODEF_CONNECTED_ID_HYUNDAI,
         organization: "0302",
         startDate: CODEF_START_DATE,
-        endDate: CODEF_END_DATE,
+        endDate: getCodefEndDate(),
         cardNo: import.meta.env.VITE_CODEF_CARD_NO_HYUNDAI,
         cardPassword: import.meta.env.VITE_CODEF_CARD_PW_HYUNDAI,
       });

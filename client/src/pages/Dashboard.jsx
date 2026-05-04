@@ -65,7 +65,13 @@ function Dashboard() {
   // 도넛 차트 데이터 (지출 카테고리별)
   const categoryData = Object.entries(
     transactions
-      .filter((t) => t.amount < 0 && t.category !== "투자" && t.category !== "이체")
+      .filter((t) =>
+        t.amount < 0 &&
+        t.category !== "투자" &&
+        t.category !== "이체" &&
+        t.date >= firstDay &&
+        t.date <= lastDay
+      )
       .reduce((acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
         return acc;
