@@ -12,6 +12,7 @@ const bankOptions = [
   { key: "hyundai", label: "현대카드", available: true },
   { key: "kakaopay", label: "카카오페이", available: true },
   { key: "woori", label: "우리은행", available: true },
+  { key: "kbank", label: "케이뱅크", available: true },
 ];
 
 function Upload() {
