@@ -318,6 +318,56 @@ export function DataProvider({ children }) {
     return { transactions: parsed, balance: latestBalance };
   };
 
+  // ── 케이뱅크 파서 ──────────────────────────────
+  const parseKBankCSV = (csvText) => {
+    const lines = csvText.split("\n").filter((l) => l.trim());
+    const dataLines = lines.slice(1);
+    let latestBalance = 0;
+
+    const parsed = dataLines.map((line, index) => {
+      const cols = [];
+      let current = "", inQuotes = false;
+      for (const char of line) {
+        if (char === '"') { inQuotes = !inQuotes; }
+        else if (char === "," && !inQuotes) { cols.push(current.trim()); current = ""; }
+        else { current += char; }
+      }
+      cols.push(current.trim());
+
+      // 케이뱅크 컬럼 순서:
+      // 0: 거래일시, 1: 거래구분, 2: 입금금액, 3: 출금금액, 4: 잔액
+      // 5: 상대예금주명, 6: 상대은행, 7: 상대계좌번호, 8: 적요내용, 9: 메모
+      const date = cols[0] || "";
+      const txType = cols[1] || "";
+      const inAmt = parseInt(cols[2]?.replace(/,/g, "") || "0");
+      const outAmt = parseInt(cols[3]?.replace(/,/g, "") || "0");
+      const balance = parseInt(cols[4]?.replace(/,/g, "") || "0");
+      const memo = cols[8] || cols[5] || "";
+      const amount = inAmt > 0 ? inAmt : -outAmt;
+
+      latestBalance = balance;
+
+      const formattedDate = date.slice(0, 10).replace(/\./g, "-");
+
+      const isTransfer = ["이체", "송금"].some((k) => txType.includes(k));
+      const isPaymentCharge = ["카카오페이", "현대카드", "네이버페이", MY_NAME].some((k) => memo.includes(k));
+      const transferCategory = isPaymentCharge ? "이체" : getTransferCategory(memo, isTransfer, amount);
+      const category = transferCategory ?? categorize(memo, amount);
+
+      return {
+        id: `kbank-${index}`,
+        date: formattedDate,
+        description: memo,
+        category,
+        amount,
+        type: inAmt > 0 ? "입금" : "출금",
+        account: "케이뱅크",
+      };
+    }).filter((t) => t.amount !== 0);
+
+    return { transactions: parsed, balance: latestBalance };
+  };
+
   const parseCSV = (csvText, bankType) => {
     const parsers = {
       shinhan: parseShinhanCSV,
@@ -326,6 +376,7 @@ export function DataProvider({ children }) {
       hyundai: parseHyundaiCardCSV,
       kakaopay: parseKakaoPayCSV,
       woori: parseWooriBankCSV,
+      kbank: parseKBankCSV,  // 추가
     };
     return (parsers[bankType] || parseShinhanCSV)(csvText);
   };
