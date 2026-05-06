@@ -9,7 +9,7 @@ import { transactions as dummyTransactions, accounts as dummyAccounts } from "..
 const MY_NAME = "이유비";
 const SHINHAN_TRANSFER_TYPES = ["모바일", "타행IB", "FB이체"];
 const CODEF_START_DATE = "20260401";
-const getCodefEndDate  = () => {
+const getCodefEndDate = () => {
   const now = new Date();
   return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
 };
@@ -24,7 +24,7 @@ const CATEGORY_KEYWORDS = {
   구독: ["넷플릭스", "유튜브", "스포티파이", "왓챠", "웨이브", "애플", "구글", "네이버플러스", "멜론", "지니", "디즈니", "라프텔", "밀리의서재", "리디", "GamsGo", "멤버스", "membership", "카카오 - 주식회사", "이모티콘"],
   의료: ["병원", "약국", "의원", "클리닉", "치과", "한의원", "피부과", "안과", "정형외과", "내과", "외과", "산부인과", "소아과", "약", "의료", "건강"],
   생활: ["런드리", "세탁", "클리닝", "청소", "수선", "미용", "헤어", "네일", "마사지", "스파"],
-  투자: ["증권","펀드","ETF","NH투자","미래에셋","삼성증권","키움","신한투자","KB증권"],
+  투자: ["증권", "펀드", "ETF", "NH투자", "미래에셋", "삼성증권", "키움", "신한투자", "KB증권"],
   이체: ["네이버페이충전", "네이버페이", "카카오페이", "토스", "페이코", "FB이체", "타행이체", "CD송금", "현대카드", "신한카드", "삼성카드", "KB카드", "롯데카드", "우리카드", "이유비"],
 };
 
@@ -95,9 +95,18 @@ const codefPost = async (endpoint, body) => {
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  const [isDemoMode, setIsDemoMode] = useState(true);
-  const [realTransactions, setRealTransactions] = useState([]);
-  const [realAccounts, setRealAccounts] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(() => {
+    const saved = localStorage.getItem("isDemoMode");
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [realTransactions, setRealTransactions] = useState(() => {
+    const saved = localStorage.getItem("realTransactions");
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [realAccounts, setRealAccounts] = useState(() => {
+    const saved = localStorage.getItem("realAccounts");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [holdings, setHoldings] = useState(() => {
     const saved = localStorage.getItem("holdings");
     return saved ? JSON.parse(saved) : [];
@@ -563,6 +572,9 @@ export function DataProvider({ children }) {
   useEffect(() => { localStorage.setItem("holdings", JSON.stringify(holdings)); }, [holdings]);
   useEffect(() => { localStorage.setItem("monthlyGoal", monthlyGoal); }, [monthlyGoal]);
   useEffect(() => { localStorage.setItem("manualBalances", JSON.stringify(manualBalances)); }, [manualBalances]);
+  useEffect(() => { localStorage.setItem("realTransactions", JSON.stringify(realTransactions)); }, [realTransactions]);
+  useEffect(() => { localStorage.setItem("realAccounts", JSON.stringify(realAccounts)); }, [realAccounts]);
+  useEffect(() => { localStorage.setItem("isDemoMode", JSON.stringify(isDemoMode)); }, [isDemoMode]);
 
   return (
     <DataContext.Provider value={{
