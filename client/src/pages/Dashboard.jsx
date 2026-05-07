@@ -3,7 +3,8 @@
 // 자산 현황, 수입/지출 요약, 최근 거래 내역, 도넛 차트
 // =============================================
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import { useState, useEffect } from "react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import {
   totalCardSpending as dummyCardSpending,
 } from "../data/dummyData";
@@ -12,19 +13,19 @@ import { useData } from "../context/DataContext";
 const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
-  카페: "bg-amber-100 text-amber-600",
-  쇼핑: "bg-pink-100 text-pink-600",
-  편의점: "bg-orange-100 text-orange-600",
-  투자: "bg-lime-100 text-lime-600",
-  구독: "bg-purple-100 text-purple-600",
-  식비: "bg-green-100 text-green-600",
-  교통: "bg-cyan-100 text-cyan-600",
-  수입: "bg-lime-100 text-lime-700",
-  이체: "bg-gray-100 text-gray-500",
-  의료: "bg-red-100 text-red-500",
-  기타: "bg-gray-100 text-gray-500",
-  생활: "bg-teal-100 text-teal-600",
-  지출이체: "bg-orange-100 text-orange-600",
+  카페: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  쇼핑: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
+  편의점: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+  투자: "bg-lime-100 text-lime-600 dark:bg-lime-900/30 dark:text-lime-400",
+  구독: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  식비: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  교통: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
+  수입: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400",
+  이체: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  의료: "bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400",
+  기타: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  생활: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
+  지출이체: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
 };
 
 const bankFavicons = {
@@ -79,6 +80,41 @@ function Dashboard() {
   ).map(([name, value]) => ({ name, value }));
 
   const recentTransactions = transactions.slice(0, 5);
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  // 월별 지출/수입 추이 (최근 6개월)
+  const monthlyData = (() => {
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const start = `${year}-${month}-01`;
+      const end = `${year}-${month}-${String(new Date(year, d.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+      const label = `${d.getMonth() + 1}월`;
+
+      const income = transactions
+        .filter((t) => t.amount > 0 && t.category !== "이체" && t.date >= start && t.date <= end)
+        .reduce((sum, t) => sum + t.amount, 0);
+
+      const expense = transactions
+        .filter((t) => t.amount < 0 && t.category !== "이체" && t.category !== "투자" && t.date >= start && t.date <= end)
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+      if (income > 0 || expense > 0) {
+        months.push({ label, income, expense });
+      }
+    }
+    return months;
+  })();
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
@@ -161,7 +197,7 @@ function Dashboard() {
                   </Pie>
                   <Tooltip
                     formatter={(value, name, props) => [formatKRW(value), props.payload.name]}
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #1f2937", backgroundColor: "#111827", color: "#fff", fontSize: "12px" }}
+                    contentStyle={{ borderRadius: "12px", border: `1px solid ${isDark ? "#1f2937" : "#e5e7eb"}`, backgroundColor: isDark ? "#111827" : "#fff", color: isDark ? "#fff" : "#111827", fontSize: "12px" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -264,6 +300,55 @@ function Dashboard() {
           </div>
         );
       })()}
+
+      {/* 월별 수입/지출 추이 */}
+      {monthlyData.length > 0 && (
+        <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">월별 수입/지출 추이</h2>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={monthlyData} barGap={4} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 11, fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: "#9ca3af" }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v) => `${(v / 10000).toFixed(0)}만`}
+                width={40}
+              />
+              <Tooltip
+                formatter={(value, name) => [formatKRW(value), name === "income" ? "수입" : "지출"]}
+                contentStyle={{
+                  borderRadius: "12px",
+                  border: `1px solid ${isDark ? "#1f2937" : "#e5e7eb"}`,
+                  backgroundColor: isDark ? "#111827" : "#fff",
+                  color: isDark ? "#fff" : "#111827",
+                  fontSize: "12px",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
+                }}
+                cursor={{ fill: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" }}
+              />
+              <Bar dataKey="income" fill="#a3e635" radius={[6, 6, 0, 0]} name="income" />
+              <Bar dataKey="expense" fill="#f87171" radius={[6, 6, 0, 0]} name="expense" />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="flex gap-4 justify-end mt-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-lime-400" />
+              <span className="text-xs text-gray-400">수입</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="text-xs text-gray-400">지출</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 최근 거래 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
