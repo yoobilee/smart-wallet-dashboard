@@ -39,6 +39,7 @@ function Investments() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [editMode, setEditMode] = useState(false);  // 종목 편집 모드
   const [exchangeRate, setExchangeRate] = useState(1450); // 기본값
+  const [marketData, setMarketData] = useState({});
 
   // Yahoo Finance API로 현재가 조회 (CORS 프록시 사용)
   const fetchPrice = async (code) => {
@@ -71,11 +72,43 @@ function Investments() {
     }
   };
 
+  const fetchMarketData = async () => {
+    const symbols = {
+      "KOSPI": "^KS11",
+      "KOSDAQ": "^KQ11",
+      "NASDAQ": "^IXIC",
+      "S&P500": "^GSPC",
+      "USD/KRW": "USDKRW=X",
+    };
+
+    const results = {};
+    await Promise.all(
+      Object.entries(symbols).map(async ([name, symbol]) => {
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          const res = await fetch(proxyUrl);
+          const data = await res.json();
+          const meta = data?.chart?.result?.[0]?.meta;
+          if (meta) {
+            results[name] = {
+              price: meta.regularMarketPrice,
+              change: meta.regularMarketChangePercent ?? meta.chartPreviousClose
+                ? ((meta.regularMarketPrice - meta.chartPreviousClose) / meta.chartPreviousClose * 100)
+                : 0,
+            };
+          }
+        } catch { /* ignore */ }
+      })
+    );
+    setMarketData(results);
+  };
+
   // 모든 종목 시세 조회
   const fetchAllPrices = async () => {
     setLoading(true);
     // 환율 먼저 조회
-    await fetchExchangeRate();
+    await Promise.all([fetchExchangeRate(), fetchMarketData()]);
 
     const newPrices = {};
     for (const h of holdings) {
@@ -156,6 +189,66 @@ function Investments() {
           {loading ? "조회 중..." : "시세 갱신"}
         </button>
       </div>
+
+      {/* 시장 지표 티커 배너 */}
+      {Object.keys(marketData).length > 0 && (
+        <div className="overflow-hidden rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="animate-ticker">
+            {/* 첫 번째 세트 */}
+            <div className="flex">
+              {Object.entries(marketData).map(([name, data]) => {
+                const isUp = data.change >= 0;
+                const isRate = name === "USD/KRW";
+                return (
+                  <div key={name} className="inline-flex items-center gap-1.5 px-5 py-2.5">
+                    <span className="text-xs text-gray-400 font-medium">{name}</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      {isRate
+                        ? data.price.toFixed(2)
+                        : data.price >= 1000
+                          ? data.price.toLocaleString("ko-KR", { maximumFractionDigits: 2 })
+                          : data.price.toFixed(2)
+                      }
+                    </span>
+                    {!isRate && (
+                      <span className={`text-xs font-medium ${isUp ? "text-rose-500" : "text-blue-500"}`}>
+                        {isUp ? "▲" : "▼"} {Math.abs(data.change).toFixed(2)}%
+                      </span>
+                    )}
+                    <span className="text-gray-200 dark:text-gray-700 mx-2">|</span>
+                  </div>
+                );
+              })}
+            </div>
+            {/* 두 번째 세트 (첫 번째와 동일, 끊김 없이 이어지게) */}
+            <div className="flex" aria-hidden="true">
+              {Object.entries(marketData).map(([name, data]) => {
+                const isUp = data.change >= 0;
+                const isRate = name === "USD/KRW";
+                return (
+                  <div key={`${name}-clone`} className="inline-flex items-center gap-1.5 px-5 py-2.5">
+                    <span className="text-xs text-gray-400 font-medium">{name}</span>
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      {isRate
+                        ? data.price.toFixed(2)
+                        : data.price >= 1000
+                          ? data.price.toLocaleString("ko-KR", { maximumFractionDigits: 2 })
+                          : data.price.toFixed(2)
+                      }
+                    </span>
+                    {!isRate && (
+                      <span className={`text-xs font-medium ${isUp ? "text-rose-500" : "text-blue-500"}`}>
+                        {isUp ? "▲" : "▼"} {Math.abs(data.change).toFixed(2)}%
+                      </span>
+                    )}
+                    <span className="text-gray-200 dark:text-gray-700 mx-2">|</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 총 투자 자산 카드 */}
       <div className="bg-gray-950 text-white rounded-2xl p-6 dark:bg-gray-900 dark:border dark:border-gray-800 space-y-3">

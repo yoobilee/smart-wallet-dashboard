@@ -2,6 +2,17 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 15s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
 * {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
