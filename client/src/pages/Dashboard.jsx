@@ -10,7 +10,7 @@ import {
 } from "../data/dummyData";
 import { useData } from "../context/DataContext";
 
-const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
+const formatKRW = (amount) => Math.round(Math.abs(amount)).toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
   카페: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
@@ -52,7 +52,7 @@ function Dashboard() {
   const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
 
-  // 카드 청구 예정액 (현대카드 - 이번 달 1일~말일 사용액, 매월 5일 청구)
+  // 카드 청구 예정액 (현대카드 - 이번 달 1일~말일 사용액, 매월 12일 청구)
   const totalCardSpending = isDemoMode
     ? dummyCardSpending
     : transactions
@@ -167,7 +167,7 @@ function Dashboard() {
             <p className="text-xl font-bold text-rose-500 mt-1">-{formatKRW(thisMonthExpense)}</p>
           </div>
           <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
-            <p className="text-xs text-gray-400">현대카드 청구 예정 <span className="text-gray-300">· 매월 5일</span></p>
+            <p className="text-xs text-gray-400">현대카드 청구 예정 <span className="text-gray-300">· 매월 12일</span></p>
             <p className="text-xl font-bold text-gray-800 dark:text-white mt-1">{formatKRW(totalCardSpending)}</p>
           </div>
         </div>

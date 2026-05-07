@@ -6,7 +6,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useData } from "../context/DataContext";
 import { ArrowUpDown, ChevronDown } from "lucide-react";
 
-const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
+const formatKRW = (amount) => (amount || 0).toLocaleString("ko-KR") + "원";
 
 const categoryColor = {
   카페: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
