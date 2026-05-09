@@ -3,14 +3,15 @@
 // 다크모드 토글 버튼 추가
 // =============================================
 
-import { LayoutDashboard, Wallet, ArrowLeftRight, Upload, Sun, Moon, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Wallet, ArrowLeftRight, Upload, Sun, Moon, TrendingUp, CalendarClock } from "lucide-react";
 
 const navItems = [
-  { label: "Overview",     key: "dashboard",    icon: LayoutDashboard },
-  { label: "Accounts",     key: "accounts",     icon: Wallet          },
-  { label: "Transactions", key: "transactions", icon: ArrowLeftRight  },
-  { label: "Investments",  key: "investments",  icon: TrendingUp      },
-  { label: "Upload",       key: "upload",       icon: Upload          },
+  { label: "Overview",      key: "dashboard",     icon: LayoutDashboard },
+  { label: "Accounts",      key: "accounts",      icon: Wallet          },
+  { label: "Transactions",  key: "transactions",  icon: ArrowLeftRight  },
+  { label: "Investments",   key: "investments",   icon: TrendingUp      },
+  { label: "Subscriptions", key: "subscriptions", icon: CalendarClock   },
+  { label: "Upload",        key: "upload",        icon: Upload          },
 ];
 
 function Sidebar({ activePage, onNavigate, darkMode, onToggleDark }) {

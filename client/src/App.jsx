@@ -11,6 +11,7 @@ import Accounts from "./pages/Accounts";
 import Transactions from "./pages/Transactions";
 import Upload from "./pages/Upload";
 import Investments from "./pages/Investments";
+import Subscriptions from "./pages/Subscriptions";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -37,6 +38,7 @@ function App() {
       case "transactions": return <Transactions />;
       case "upload":       return <Upload />;
       case "investments": return <Investments />;
+      case "subscriptions": return <Subscriptions />;
       default:             return <Dashboard />;
     }
   };
