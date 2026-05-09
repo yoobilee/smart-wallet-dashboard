@@ -2,52 +2,151 @@
 // Subscriptions 페이지 - 정기구독 관리
 // =============================================
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
-const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
+const CATEGORY_OPTIONS = ["엔터테인먼트", "쇼핑", "음악", "클라우드", "업무", "게임", "기타"];
 
-const CATEGORY_OPTIONS = ["엔터테인먼트", "음악", "클라우드", "업무", "게임", "기타"];
+const CURRENCY_OPTIONS = [
+  { code: "KRW", label: "₩ 원"   },
+  { code: "USD", label: "$ 달러" },
+  { code: "INR", label: "₹ 루피" },
+  { code: "JPY", label: "¥ 엔"   },
+  { code: "EUR", label: "€ 유로" },
+];
 
 const categoryColor = {
   엔터테인먼트: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
-  음악: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  클라우드: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  업무: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
-  게임: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  기타: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  쇼핑:         "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+  음악:         "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  클라우드:     "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+  업무:         "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
+  게임:         "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  기타:         "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
 };
 
 const subFavicons = {
-  넷플릭스: "https://www.google.com/s2/favicons?domain=netflix.com&sz=32",
-  "유튜브 프리미엄": "https://www.google.com/s2/favicons?domain=youtube.com&sz=32",
-  Spotify: "https://www.google.com/s2/favicons?domain=spotify.com&sz=32",
-  애플: "https://www.google.com/s2/favicons?domain=apple.com&sz=32",
-  구글: "https://www.google.com/s2/favicons?domain=google.com&sz=32",
-  디즈니: "https://www.google.com/s2/favicons?domain=disneyplus.com&sz=32",
-  왓챠: "https://www.google.com/s2/favicons?domain=watcha.com&sz=32",
-  웨이브: "https://www.google.com/s2/favicons?domain=wavve.com&sz=32",
-  GamsGo: "https://www.google.com/s2/favicons?domain=gamsgo.com&sz=32",
-  Cloudflare: "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=32",
+  "와우 멤버십":         "https://www.google.com/s2/favicons?domain=coupang.com&sz=32",
+  "이모티콘 플러스":     "https://www.google.com/s2/favicons?domain=kakao.com&sz=32",
+  "톡서랍 플러스":       "https://www.google.com/s2/favicons?domain=kakao.com&sz=32",
+  "iCloud+":             "https://www.google.com/s2/favicons?domain=apple.com&sz=32",
+  "컬리멤버스":          "https://www.google.com/s2/favicons?domain=kurly.com&sz=32",
+  "Youtube Premium":     "https://www.google.com/s2/favicons?domain=youtube.com&sz=32",
+  "Claude":              "https://www.google.com/s2/favicons?domain=anthropic.com&sz=32",
+  "네이버플러스 멤버십": "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
+  "Cloudflare":          "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=32",
+  "Spotify":             "https://www.google.com/s2/favicons?domain=spotify.com&sz=32",
 };
 
+const formatKRW = (amount) => Math.round(amount).toLocaleString("ko-KR") + "원";
+const currencySymbol = (code) => ({ KRW: "₩", USD: "$", INR: "₹", JPY: "¥", EUR: "€" }[code] || "");
+
+// ── 커스텀 드롭다운 ──────────────────────────────
+function Dropdown({ value, options, onChange, placeholder, dropUp = false }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors whitespace-nowrap"
+      >
+        <span className={selected ? "text-gray-800 dark:text-gray-100" : "text-gray-400"}>
+          {selected?.label || placeholder || "선택"}
+        </span>
+        <ChevronDown size={12} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg z-20 min-w-full overflow-y-auto"
+          style={{
+            ...(dropUp ? { bottom: "100%", marginBottom: "4px" } : { top: "100%", marginTop: "4px" }),
+            maxHeight: "200px",
+          }}
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className={`w-full text-left text-sm px-4 py-2.5 transition-colors
+                ${opt.value === value
+                  ? "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-medium"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 메인 컴포넌트 ────────────────────────────────
 function Subscriptions() {
   const [subscriptions, setSubscriptions] = useState(() => {
     const saved = localStorage.getItem("subscriptions");
     return saved ? JSON.parse(saved) : [
-      { id: 1, name: "넷플릭스", category: "엔터테인먼트", amount: 17000, day: 4 },
-      { id: 2, name: "유튜브 프리미엄", category: "엔터테인먼트", amount: 14900, day: 9 },
-      { id: 3, name: "Spotify", category: "음악", amount: 10900, day: 15 },
+      { id: 1,  name: "와우 멤버십",         category: "쇼핑",         amount: 7890,  currency: "KRW", day: 1,  cycle: 1 },
+      { id: 2,  name: "이모티콘 플러스",      category: "엔터테인먼트", amount: 1900,  currency: "KRW", day: 1,  cycle: 1 },
+      { id: 3,  name: "톡서랍 플러스",        category: "엔터테인먼트", amount: 990,   currency: "KRW", day: 1,  cycle: 1 },
+      { id: 4,  name: "iCloud+",             category: "클라우드",     amount: 1.99,  currency: "USD", day: 9,  cycle: 1 },
+      { id: 5,  name: "컬리멤버스",           category: "쇼핑",         amount: 1900,  currency: "KRW", day: 10, cycle: 1 },
+      { id: 6,  name: "Youtube Premium",     category: "엔터테인먼트", amount: 189,   currency: "INR", day: 9,  cycle: 1 },
+      { id: 7,  name: "Claude",              category: "업무",         amount: 20,    currency: "USD", day: 28, cycle: 1 },
+      { id: 8,  name: "네이버플러스 멤버십",  category: "쇼핑",         amount: 4900,  currency: "KRW", day: 22, cycle: 1 },
+      { id: 9,  name: "Cloudflare",          category: "클라우드",     amount: 0,     currency: "USD", day: 28, cycle: 1 },
+      { id: 10, name: "Spotify",             category: "음악",         amount: 10900, currency: "KRW", day: 15, cycle: 1 },
     ];
   });
 
-  const [editMode, setEditMode] = useState(false);
-  const [newSub, setNewSub] = useState({ name: "", category: "기타", amount: 0, day: 1 });
+  const [editMode, setEditMode]     = useState(false);
+  const [newSub, setNewSub]         = useState({ name: "", category: "", amount: "", currency: "KRW", day: 1, cycle: 1 });
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [rates, setRates]           = useState({ USD: 1450, INR: 17, JPY: 9.5, EUR: 1600 });
 
   const today = new Date();
-  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calYear,  setCalYear]  = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
+
+  const dayOptions = Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: `${i + 1}일` }));
+
+  useEffect(() => {
+    const fetchRates = async () => {
+      const symbols = { USD: "USDKRW=X", INR: "INRKRW=X", JPY: "JPYKRW=X", EUR: "EURKRW=X" };
+      const newRates = { ...rates };
+      await Promise.all(
+        Object.entries(symbols).map(async ([code, symbol]) => {
+          try {
+            const url      = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            const res      = await fetch(proxyUrl);
+            const data     = await res.json();
+            const rate     = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+            if (rate) newRates[code] = rate;
+          } catch {}
+        })
+      );
+      setRates(newRates);
+    };
+    fetchRates();
+  }, []);
+
+  const toKRW = (amount, currency) =>
+    currency === "KRW" ? amount : amount * (rates[currency] || 1);
 
   const save = (updated) => {
     setSubscriptions(updated);
@@ -55,19 +154,18 @@ function Subscriptions() {
   };
 
   const addSub = () => {
-    if (!newSub.name) return;
-    const updated = [...subscriptions, { ...newSub, id: Date.now(), amount: parseInt(newSub.amount) || 0 }];
-    save(updated);
-    setNewSub({ name: "", category: "기타", amount: 0, day: 1 });
+    if (!newSub.name || !newSub.category) return;
+    save([...subscriptions, { ...newSub, id: Date.now(), amount: parseFloat(newSub.amount) || 0 }]);
+    setNewSub({ name: "", category: "", amount: "", currency: "KRW", day: 1, cycle: 1 });
   };
 
   const removeSub = (id) => save(subscriptions.filter((s) => s.id !== id));
-  const totalMonthly = subscriptions.reduce((sum, s) => sum + s.amount, 0);
+  const totalMonthly = subscriptions.reduce((sum, s) => sum + toKRW(s.amount, s.currency) / (s.cycle || 1), 0);
 
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevMonth = () => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); };
-  const nextMonth = () => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); };
+  const prevMonth   = () => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); };
+  const nextMonth   = () => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); };
 
   const subsByDay = subscriptions.reduce((acc, s) => {
     if (!acc[s.day]) acc[s.day] = [];
@@ -100,15 +198,15 @@ function Subscriptions() {
 
       {/* 총 월 구독료 */}
       <div className="bg-gray-950 text-white rounded-2xl p-6 dark:bg-gray-900 dark:border dark:border-gray-800">
-        <p className="text-sm text-gray-400">월 총 구독료</p>
+        <p className="text-sm text-gray-400">월 평균 구독료</p>
         <p className="text-4xl font-bold mt-2 tracking-tight">{formatKRW(totalMonthly)}</p>
         <p className="text-xs text-gray-500 mt-2">{subscriptions.length}개 서비스 구독 중</p>
       </div>
 
       {/* 캘린더 */}
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
-        {/* 헤더 */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }} className="py-4 border-b border-gray-100 dark:border-gray-800">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+          className="py-4 border-b border-gray-100 dark:border-gray-800">
           <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <ChevronLeft size={15} className="text-gray-400" />
           </button>
@@ -121,7 +219,6 @@ function Subscriptions() {
         </div>
 
         <div className="p-4">
-          {/* 요일 헤더 */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }} className="mb-1">
             {weeks.map((w) => (
               <div key={w} className={`text-center text-xs font-medium py-2
@@ -131,35 +228,28 @@ function Subscriptions() {
             ))}
           </div>
 
-          {/* 날짜 그리드 */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
             {cells.map((day, i) => {
               const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
               const daySubs = day ? (subsByDay[day] || []) : [];
-              const isSun = i % 7 === 0;
-              const isSat = i % 7 === 6;
+              const isSun   = i % 7 === 0;
+              const isSat   = i % 7 === 6;
               const isRight = i % 7 >= 5;
 
               return (
-                <div
-                  key={i}
-                  style={{ height: "72px" }}
-                  className="flex flex-col items-center pt-2 gap-1.5"
-                >
+                <div key={i} style={{ height: "72px" }} className="flex flex-col items-center pt-2 gap-1.5">
                   {day && (
                     <>
-                      {/* 날짜 숫자 */}
                       <span className={`text-xs font-medium
-        ${isToday ? "text-lime-500 dark:text-lime-400 font-bold"
+                        ${isToday ? "text-lime-500 dark:text-lime-400 font-bold"
                           : isSun ? "text-rose-400"
-                            : isSat ? "text-blue-400"
-                              : "text-gray-500 dark:text-gray-400"}`}
+                          : isSat ? "text-blue-400"
+                          : "text-gray-500 dark:text-gray-400"}`}
                       >
                         {day}
                         {isToday && <span className="inline-block w-1 h-1 rounded-full bg-lime-400 ml-0.5 mb-0.5 align-middle" />}
                       </span>
 
-                      {/* 도트 + 툴팁 */}
                       {daySubs.length > 0 && (
                         <div
                           className="relative flex gap-0.5 cursor-default"
@@ -174,7 +264,7 @@ function Subscriptions() {
                             <div
                               className="absolute top-5 z-50 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-xl"
                               style={{
-                                width: "160px",
+                                width: "180px",
                                 ...(isRight ? { right: 0 } : { left: "50%", transform: "translateX(-50%)" })
                               }}
                             >
@@ -185,9 +275,14 @@ function Subscriptions() {
                                   ) : (
                                     <div className="w-4 h-4 rounded-sm bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
                                   )}
-                                  <div>
-                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-200">{sub.name}</p>
-                                    <p className="text-xs text-gray-400">{formatKRW(sub.amount)}</p>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">{sub.name}</p>
+                                    <p className="text-xs text-gray-400">
+                                      {sub.currency !== "KRW"
+                                        ? `${currencySymbol(sub.currency)}${sub.amount} · ${formatKRW(toKRW(sub.amount, sub.currency))}`
+                                        : formatKRW(sub.amount)
+                                      }
+                                    </p>
                                   </div>
                                 </div>
                               ))}
@@ -223,11 +318,19 @@ function Subscriptions() {
                 </span>
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{s.name}</p>
-                  <p className="text-xs text-gray-400">매월 {s.day}일</p>
+                  <p className="text-xs text-gray-400">
+                    {s.cycle > 1 ? `${s.cycle}개월마다` : "매월"} {s.day}일
+                    {s.currency !== "KRW" && ` · ${currencySymbol(s.currency)}${s.amount}`}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatKRW(s.amount)}</p>
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{formatKRW(toKRW(s.amount, s.currency))}</p>
+                  {s.currency !== "KRW" && (
+                    <p className="text-xs text-gray-400">{currencySymbol(s.currency)}{s.amount}</p>
+                  )}
+                </div>
                 {editMode && (
                   <button onClick={() => removeSub(s.id)} className="text-xs text-rose-400 hover:text-rose-600 transition-colors">삭제</button>
                 )}
@@ -241,7 +344,7 @@ function Subscriptions() {
       {editMode && (
         <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm space-y-4">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">구독 추가</p>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             <input
               type="text"
               placeholder="서비스명"
@@ -249,28 +352,42 @@ function Subscriptions() {
               onChange={(e) => setNewSub((prev) => ({ ...prev, name: e.target.value }))}
               className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
             />
-            <select
+            <Dropdown
               value={newSub.category}
-              onChange={(e) => setNewSub((prev) => ({ ...prev, category: e.target.value }))}
-              className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 outline-none"
-            >
-              {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input
-              type="number"
-              placeholder="금액"
-              value={newSub.amount || ""}
-              onChange={(e) => setNewSub((prev) => ({ ...prev, amount: e.target.value }))}
-              className="w-28 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+              placeholder="카테고리"
+              options={CATEGORY_OPTIONS.map((c) => ({ value: c, label: c }))}
+              onChange={(v) => setNewSub((prev) => ({ ...prev, category: v }))}
+              dropUp
+            />
+            <Dropdown
+              value={newSub.currency}
+              options={CURRENCY_OPTIONS.map((c) => ({ value: c.code, label: c.label }))}
+              onChange={(v) => setNewSub((prev) => ({ ...prev, currency: v }))}
+              dropUp
             />
             <input
               type="number"
-              placeholder="결제일"
-              min="1"
-              max="31"
-              value={newSub.day || ""}
-              onChange={(e) => setNewSub((prev) => ({ ...prev, day: parseInt(e.target.value) || 1 }))}
-              className="w-20 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+              placeholder="금액"
+              value={newSub.amount}
+              onChange={(e) => setNewSub((prev) => ({ ...prev, amount: e.target.value }))}
+              className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
+            />
+            <Dropdown
+              value={newSub.day}
+              options={dayOptions}
+              onChange={(v) => setNewSub((prev) => ({ ...prev, day: v }))}
+              dropUp
+            />
+            <Dropdown
+              value={newSub.cycle}
+              options={[
+                { value: 1,  label: "매월"  },
+                { value: 3,  label: "3개월" },
+                { value: 6,  label: "6개월" },
+                { value: 12, label: "연간"  },
+              ]}
+              onChange={(v) => setNewSub((prev) => ({ ...prev, cycle: v }))}
+              dropUp
             />
             <button
               onClick={addSub}
@@ -279,6 +396,11 @@ function Subscriptions() {
               추가
             </button>
           </div>
+          {newSub.currency !== "KRW" && parseFloat(newSub.amount) > 0 && (
+            <p className="text-xs text-gray-400">
+              ≈ {formatKRW(toKRW(parseFloat(newSub.amount), newSub.currency))} (실시간 환율 기준)
+            </p>
+          )}
         </div>
       )}
 
