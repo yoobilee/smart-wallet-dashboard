@@ -64,7 +64,7 @@ function Dropdown({ value, options, onChange, label }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors"
+        className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-all duration-300 whitespace-nowrap"
       >
         {label && <span className="text-gray-400">{label}</span>}
         <span className="font-medium text-gray-700 dark:text-gray-200">

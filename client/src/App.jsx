@@ -33,13 +33,13 @@ function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard":    return <Dashboard />;
-      case "accounts":     return <Accounts />;
+      case "dashboard": return <Dashboard />;
+      case "accounts": return <Accounts />;
       case "transactions": return <Transactions />;
-      case "upload":       return <Upload />;
+      case "upload": return <Upload />;
       case "investments": return <Investments />;
       case "subscriptions": return <Subscriptions />;
-      default:             return <Dashboard />;
+      default: return <Dashboard />;
     }
   };
 

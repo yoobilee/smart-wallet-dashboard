@@ -14,6 +14,10 @@
 }
 
 * {
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+* {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

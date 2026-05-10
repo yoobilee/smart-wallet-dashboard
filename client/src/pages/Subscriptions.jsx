@@ -8,34 +8,37 @@ import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 const CATEGORY_OPTIONS = ["엔터테인먼트", "쇼핑", "음악", "클라우드", "업무", "게임", "기타"];
 
 const CURRENCY_OPTIONS = [
-  { code: "KRW", label: "₩ 원"   },
+  { code: "KRW", label: "₩ 원" },
   { code: "USD", label: "$ 달러" },
   { code: "INR", label: "₹ 루피" },
-  { code: "JPY", label: "¥ 엔"   },
+  { code: "JPY", label: "¥ 엔" },
   { code: "EUR", label: "€ 유로" },
 ];
 
 const categoryColor = {
   엔터테인먼트: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
-  쇼핑:         "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  음악:         "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  클라우드:     "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  업무:         "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
-  게임:         "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  기타:         "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  쇼핑: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+  음악: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  클라우드: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+  업무: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
+  게임: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  기타: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
 };
 
-const subFavicons = {
-  "와우 멤버십":         "https://www.google.com/s2/favicons?domain=coupang.com&sz=32",
-  "이모티콘 플러스":     "https://www.google.com/s2/favicons?domain=kakao.com&sz=32",
-  "톡서랍 플러스":       "https://www.google.com/s2/favicons?domain=kakao.com&sz=32",
-  "iCloud+":             "https://www.google.com/s2/favicons?domain=apple.com&sz=32",
-  "컬리멤버스":          "https://www.google.com/s2/favicons?domain=kurly.com&sz=32",
-  "Youtube Premium":     "https://www.google.com/s2/favicons?domain=youtube.com&sz=32",
-  "Claude":              "https://www.google.com/s2/favicons?domain=anthropic.com&sz=32",
-  "네이버플러스 멤버십": "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
-  "Cloudflare":          "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=32",
-  "Spotify":             "https://www.google.com/s2/favicons?domain=spotify.com&sz=32",
+const getFavicon = (name) => {
+  const n = name.toLowerCase();
+  if (n.includes("쿠팡") || n.includes("와우")) return "https://www.google.com/s2/favicons?domain=coupang.com&sz=32";
+  if (n.includes("카카오") || n.includes("이모티콘") || n.includes("톡서랍")) return "https://www.google.com/s2/favicons?domain=kakao.com&sz=32";
+  if (n.includes("icloud") || n.includes("apple") || n.includes("애플")) return "https://www.google.com/s2/favicons?domain=apple.com&sz=32";
+  if (n.includes("kurly") || n.includes("컬리")) return "https://www.google.com/s2/favicons?domain=kurly.com&sz=32";
+  if (n.includes("youtube") || n.includes("유튜브")) return "https://www.google.com/s2/favicons?domain=youtube.com&sz=32";
+  if (n.includes("claude") || n.includes("anthropic") || n.includes("클로드")) return "https://www.google.com/s2/favicons?domain=anthropic.com&sz=32";
+  if (n.includes("naver") || n.includes("네이버")) return "https://www.google.com/s2/favicons?domain=naver.com&sz=32";
+  if (n.includes("cloudflare")) return "https://www.google.com/s2/favicons?domain=cloudflare.com&sz=32";
+  if (n.includes("spotify") || n.includes("스포티파이")) return "https://www.google.com/s2/favicons?domain=spotify.com&sz=32";
+  if (n.includes("netflix") || n.includes("넷플릭스")) return "https://www.google.com/s2/favicons?domain=netflix.com&sz=32";
+  if (n.includes("nintendo") || n.includes("닌텐도")) return "https://www.google.com/s2/favicons?domain=nintendo.com&sz=32";
+  return null;
 };
 
 const formatKRW = (amount) => Math.round(amount).toLocaleString("ko-KR") + "원";
@@ -60,7 +63,7 @@ function Dropdown({ value, options, onChange, placeholder, dropUp = false }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-colors whitespace-nowrap"
+        className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:border-gray-400 transition-all duration-300 whitespace-nowrap"
       >
         <span className={selected ? "text-gray-800 dark:text-gray-100" : "text-gray-400"}>
           {selected?.label || placeholder || "선택"}
@@ -70,17 +73,18 @@ function Dropdown({ value, options, onChange, placeholder, dropUp = false }) {
 
       {open && (
         <div
-          className="absolute left-0 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg z-20 min-w-full overflow-y-auto"
+          className="absolute left-0 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl shadow-lg z-20 overflow-y-auto transition-all duration-300"
           style={{
             ...(dropUp ? { bottom: "100%", marginBottom: "4px" } : { top: "100%", marginTop: "4px" }),
             maxHeight: "200px",
+            minWidth: "140px",
           }}
         >
           {options.map((opt) => (
             <button
               key={opt.value}
               onClick={() => { onChange(opt.value); setOpen(false); }}
-              className={`w-full text-left text-sm px-4 py-2.5 transition-colors
+              className={`w-full text-left text-sm px-4 py-2.5 transition-colors whitespace-nowrap
                 ${opt.value === value
                   ? "bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white font-medium"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -100,29 +104,31 @@ function Subscriptions() {
   const [subscriptions, setSubscriptions] = useState(() => {
     const saved = localStorage.getItem("subscriptions");
     return saved ? JSON.parse(saved) : [
-      { id: 1,  name: "와우 멤버십",         category: "쇼핑",         amount: 7890,  currency: "KRW", day: 1,  cycle: 1 },
-      { id: 2,  name: "이모티콘 플러스",      category: "엔터테인먼트", amount: 1900,  currency: "KRW", day: 1,  cycle: 1 },
-      { id: 3,  name: "톡서랍 플러스",        category: "엔터테인먼트", amount: 990,   currency: "KRW", day: 1,  cycle: 1 },
-      { id: 4,  name: "iCloud+",             category: "클라우드",     amount: 1.99,  currency: "USD", day: 9,  cycle: 1 },
-      { id: 5,  name: "컬리멤버스",           category: "쇼핑",         amount: 1900,  currency: "KRW", day: 10, cycle: 1 },
-      { id: 6,  name: "Youtube Premium",     category: "엔터테인먼트", amount: 189,   currency: "INR", day: 9,  cycle: 1 },
-      { id: 7,  name: "Claude",              category: "업무",         amount: 20,    currency: "USD", day: 28, cycle: 1 },
-      { id: 8,  name: "네이버플러스 멤버십",  category: "쇼핑",         amount: 4900,  currency: "KRW", day: 22, cycle: 1 },
-      { id: 9,  name: "Cloudflare",          category: "클라우드",     amount: 0,     currency: "USD", day: 28, cycle: 1 },
-      { id: 10, name: "Spotify",             category: "음악",         amount: 10900, currency: "KRW", day: 15, cycle: 1 },
+      { id: 1, name: "와우 멤버십", category: "쇼핑", amount: 7890, currency: "KRW", day: 1, month: null, cycle: 1 },
+      { id: 2, name: "이모티콘 플러스", category: "엔터테인먼트", amount: 1900, currency: "KRW", day: 1, month: null, cycle: 1 },
+      { id: 3, name: "톡서랍 플러스", category: "엔터테인먼트", amount: 990, currency: "KRW", day: 1, month: null, cycle: 1 },
+      { id: 4, name: "iCloud+", category: "클라우드", amount: 1.99, currency: "USD", day: 9, month: null, cycle: 1 },
+      { id: 5, name: "컬리멤버스", category: "쇼핑", amount: 1900, currency: "KRW", day: 10, month: null, cycle: 1 },
+      { id: 6, name: "Youtube Premium", category: "엔터테인먼트", amount: 189, currency: "INR", day: 9, month: null, cycle: 1 },
+      { id: 7, name: "Claude", category: "업무", amount: 20, currency: "USD", day: 28, month: null, cycle: 1 },
+      { id: 8, name: "네이버플러스 멤버십", category: "쇼핑", amount: 4900, currency: "KRW", day: 22, month: null, cycle: 1 },
+      { id: 9, name: "Cloudflare", category: "클라우드", amount: 0, currency: "USD", day: 28, month: null, cycle: 1 },
+      { id: 10, name: "Spotify", category: "음악", amount: 10900, currency: "KRW", day: 15, month: null, cycle: 1 },
+      { id: 11, name: "Nintendo Switch Online", category: "게임", amount: 4900, currency: "KRW", day: 19, month: 2, cycle: 12 },
     ];
   });
 
-  const [editMode, setEditMode]     = useState(false);
-  const [newSub, setNewSub]         = useState({ name: "", category: "", amount: "", currency: "KRW", day: 1, cycle: 1 });
+  const [editMode, setEditMode] = useState(false);
+  const [newSub, setNewSub] = useState({ name: "", category: "", amount: "", currency: "KRW", day: 1, month: 1, cycle: 1 });
   const [hoveredDay, setHoveredDay] = useState(null);
-  const [rates, setRates]           = useState({ USD: 1450, INR: 17, JPY: 9.5, EUR: 1600 });
+  const [rates, setRates] = useState({ USD: 1450, INR: 17, JPY: 9.5, EUR: 1600 });
 
   const today = new Date();
-  const [calYear,  setCalYear]  = useState(today.getFullYear());
+  const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
 
   const dayOptions = Array.from({ length: 31 }, (_, i) => ({ value: i + 1, label: `${i + 1}일` }));
+  const monthOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1}월` }));
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -131,13 +137,13 @@ function Subscriptions() {
       await Promise.all(
         Object.entries(symbols).map(async ([code, symbol]) => {
           try {
-            const url      = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
             const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-            const res      = await fetch(proxyUrl);
-            const data     = await res.json();
-            const rate     = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+            const res = await fetch(proxyUrl);
+            const data = await res.json();
+            const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
             if (rate) newRates[code] = rate;
-          } catch {}
+          } catch { }
         })
       );
       setRates(newRates);
@@ -155,21 +161,32 @@ function Subscriptions() {
 
   const addSub = () => {
     if (!newSub.name || !newSub.category) return;
-    save([...subscriptions, { ...newSub, id: Date.now(), amount: parseFloat(newSub.amount) || 0 }]);
-    setNewSub({ name: "", category: "", amount: "", currency: "KRW", day: 1, cycle: 1 });
+    save([...subscriptions, {
+      ...newSub,
+      id: Date.now(),
+      amount: parseFloat(newSub.amount) || 0,
+      month: newSub.cycle !== 1 ? newSub.month : null,
+    }]);
+    setNewSub({ name: "", category: "", amount: "", currency: "KRW", day: 1, month: 1, cycle: 1 });
   };
 
   const removeSub = (id) => save(subscriptions.filter((s) => s.id !== id));
   const totalMonthly = subscriptions.reduce((sum, s) => sum + toKRW(s.amount, s.currency) / (s.cycle || 1), 0);
 
-  const firstDay    = new Date(calYear, calMonth, 1).getDay();
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevMonth   = () => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); };
-  const nextMonth   = () => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); };
+  const prevMonth = () => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); };
+  const nextMonth = () => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); };
 
+  // 연간 구독은 해당 월에만 표시
   const subsByDay = subscriptions.reduce((acc, s) => {
-    if (!acc[s.day]) acc[s.day] = [];
-    acc[s.day].push(s);
+    const showThisMonth = s.cycle === 12
+      ? s.month === calMonth + 1
+      : true;
+    if (showThisMonth) {
+      if (!acc[s.day]) acc[s.day] = [];
+      acc[s.day].push(s);
+    }
     return acc;
   }, {});
 
@@ -232,8 +249,8 @@ function Subscriptions() {
             {cells.map((day, i) => {
               const isToday = day === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
               const daySubs = day ? (subsByDay[day] || []) : [];
-              const isSun   = i % 7 === 0;
-              const isSat   = i % 7 === 6;
+              const isSun = i % 7 === 0;
+              const isSat = i % 7 === 6;
               const isRight = i % 7 >= 5;
 
               return (
@@ -241,13 +258,13 @@ function Subscriptions() {
                   {day && (
                     <>
                       <span className={`text-xs font-medium
-                        ${isToday ? "text-lime-500 dark:text-lime-400 font-bold"
+                      ${isToday
+                          ? "text-lime-500 dark:text-lime-400 font-bold underline underline-offset-2 decoration-lime-400"
                           : isSun ? "text-rose-400"
-                          : isSat ? "text-blue-400"
-                          : "text-gray-500 dark:text-gray-400"}`}
+                            : isSat ? "text-blue-400"
+                              : "text-gray-500 dark:text-gray-400"}`}
                       >
                         {day}
-                        {isToday && <span className="inline-block w-1 h-1 rounded-full bg-lime-400 ml-0.5 mb-0.5 align-middle" />}
                       </span>
 
                       {daySubs.length > 0 && (
@@ -270,8 +287,8 @@ function Subscriptions() {
                             >
                               {daySubs.map((sub) => (
                                 <div key={sub.id} className="flex items-center gap-2 py-1">
-                                  {subFavicons[sub.name] ? (
-                                    <img src={subFavicons[sub.name]} alt={sub.name} className="w-4 h-4 rounded-sm flex-shrink-0" />
+                                  {getFavicon(sub.name) ? (
+                                    <img src={getFavicon(sub.name)} alt={sub.name} className="w-4 h-4 rounded-sm flex-shrink-0" />
                                   ) : (
                                     <div className="w-4 h-4 rounded-sm bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
                                   )}
@@ -308,8 +325,8 @@ function Subscriptions() {
           [...subscriptions].sort((a, b) => a.day - b.day).map((s) => (
             <div key={s.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
               <div className="flex items-center gap-3">
-                {subFavicons[s.name] ? (
-                  <img src={subFavicons[s.name]} alt={s.name} className="w-4 h-4 rounded-sm" onError={(e) => e.target.style.display = "none"} />
+                {getFavicon(s.name) ? (
+                  <img src={getFavicon(s.name)} alt={s.name} className="w-4 h-4 rounded-sm" onError={(e) => e.target.style.display = "none"} />
                 ) : (
                   <div className="w-4 h-4 rounded-sm bg-gray-200 dark:bg-gray-700" />
                 )}
@@ -319,7 +336,11 @@ function Subscriptions() {
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{s.name}</p>
                   <p className="text-xs text-gray-400">
-                    {s.cycle > 1 ? `${s.cycle}개월마다` : "매월"} {s.day}일
+                    {s.cycle === 12
+                      ? `매년 ${s.month}월 ${s.day}일`
+                      : s.cycle > 1 ? `${s.cycle}개월마다 · ${s.month}월 ${s.day}일 기준`
+                        : `매월 ${s.day}일`
+                    }
                     {s.currency !== "KRW" && ` · ${currencySymbol(s.currency)}${s.amount}`}
                   </p>
                 </div>
@@ -373,20 +394,28 @@ function Subscriptions() {
               className="w-24 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm outline-none focus:border-gray-400 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder-gray-400"
             />
             <Dropdown
+              value={newSub.cycle}
+              options={[
+                { value: 1, label: "매월" },
+                { value: 3, label: "3개월" },
+                { value: 6, label: "6개월" },
+                { value: 12, label: "연간" },
+              ]}
+              onChange={(v) => setNewSub((prev) => ({ ...prev, cycle: v }))}
+              dropUp
+            />
+            {newSub.cycle !== 1 && (
+              <Dropdown
+                value={newSub.month}
+                options={monthOptions}
+                onChange={(v) => setNewSub((prev) => ({ ...prev, month: v }))}
+                dropUp
+              />
+            )}
+            <Dropdown
               value={newSub.day}
               options={dayOptions}
               onChange={(v) => setNewSub((prev) => ({ ...prev, day: v }))}
-              dropUp
-            />
-            <Dropdown
-              value={newSub.cycle}
-              options={[
-                { value: 1,  label: "매월"  },
-                { value: 3,  label: "3개월" },
-                { value: 6,  label: "6개월" },
-                { value: 12, label: "연간"  },
-              ]}
-              onChange={(v) => setNewSub((prev) => ({ ...prev, cycle: v }))}
               dropUp
             />
             <button
