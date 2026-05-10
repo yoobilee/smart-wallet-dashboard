@@ -42,7 +42,7 @@ const bankFavicons = {
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24", "#94a3b8", "#f87171"];
 
 function Dashboard() {
-  const { transactions, totalBankBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance, monthlyGoal } = useData();
+  const { transactions, totalBankBalance, totalSavingsBalance, thisMonthIncome, thisMonthExpense, isDemoMode, totalInvestmentBalance, monthlyGoal } = useData();
 
   // 현재 날짜 기반으로 날짜 표시
   const now = new Date();
@@ -59,7 +59,7 @@ function Dashboard() {
       .filter((t) => t.account === "현대카드" && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  const totalAssets = totalBankBalance + totalInvestmentBalance;
+  const totalAssets = totalBankBalance + totalSavingsBalance + totalInvestmentBalance;
   const availableBalance = totalBankBalance;
   const investmentRatio = totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0;
 
@@ -133,17 +133,26 @@ function Dashboard() {
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-gray-400">
-            <span>가용 자산</span>
-            <span>투자 자산</span>
+            <span>가용</span>
+            <span>저축</span>
+            <span>투자</span>
           </div>
           <div className="flex rounded-full overflow-hidden h-1.5 bg-gray-800">
-            <div className="bg-lime-400 transition-all duration-500" style={{ width: `${100 - investmentRatio}%` }} />
-            <div className="bg-lime-200" style={{ width: `${investmentRatio}%` }} />
+            <div className="bg-lime-400 transition-all duration-500"
+              style={{ width: `${totalAssets > 0 ? (totalBankBalance / totalAssets) * 100 : 0}%` }} />
+            <div className="bg-lime-600 transition-all duration-500"
+              style={{ width: `${totalAssets > 0 ? (totalSavingsBalance / totalAssets) * 100 : 0}%` }} />
+            <div className="bg-lime-200 transition-all duration-500"
+              style={{ width: `${totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0}%` }} />
           </div>
           <div className="flex justify-between text-sm">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-lime-400" />
-              <span className="text-lime-400 font-semibold">{formatKRW(availableBalance)}</span>
+              <span className="text-lime-400 font-semibold">{formatKRW(totalBankBalance)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-lime-600" />
+              <span className="text-lime-600 font-semibold">{formatKRW(totalSavingsBalance)}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-lime-200 font-semibold">{formatKRW(totalInvestmentBalance)}</span>

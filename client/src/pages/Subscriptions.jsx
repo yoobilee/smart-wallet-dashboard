@@ -282,7 +282,9 @@ function Subscriptions() {
                               className="absolute top-5 z-50 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-xl"
                               style={{
                                 width: "180px",
-                                ...(isRight ? { right: 0 } : { left: "50%", transform: "translateX(-50%)" })
+                                ...(isRight
+                                  ? { right: "50%", transform: "translateX(50%)" }
+                                  : { left: "50%", transform: "translateX(-50%)" })
                               }}
                             >
                               {daySubs.map((sub) => (
