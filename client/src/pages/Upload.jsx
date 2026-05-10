@@ -6,10 +6,8 @@ import { useState } from "react";
 import { useData } from "../context/DataContext";
 
 const bankOptions = [
-  { key: "shinhan", label: "신한은행", available: true },
   { key: "kakao", label: "카카오뱅크", available: true },
   { key: "toss", label: "토스뱅크", available: true },
-  { key: "hyundai", label: "현대카드", available: true },
   { key: "kakaopay", label: "카카오페이", available: true },
   { key: "woori", label: "우리은행", available: true },
   { key: "kbank", label: "케이뱅크", available: true },
@@ -36,10 +34,12 @@ function Upload() {
   });
   const [manualSaved, setManualSaved] = useState(false);
 
-  const [selectedBank, setSelectedBank] = useState("shinhan");
+  const [selectedBank, setSelectedBank] = useState("kakao");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [selectedType, setSelectedType] = useState("입출금");
+
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
@@ -55,9 +55,7 @@ function Upload() {
         const accountInfo = {
           id: selectedBank,
           bank: bankOptions.find((b) => b.key === selectedBank)?.label,
-          type: selectedBank === "hyundai" ? "카드"
-            : selectedBank === "woori" ? "저축"
-              : "입출금",
+          type: selectedType,
           balance,
           accountNumber: "****-****-****",
         };
@@ -138,7 +136,10 @@ function Upload() {
           {bankOptions.map((bank) => (
             <button
               key={bank.key}
-              onClick={() => bank.available && setSelectedBank(bank.key)}
+              onClick={() => {
+                bank.available && setSelectedBank(bank.key);
+                setSelectedType("입출금");
+              }}
               className={`
                 px-4 py-2 rounded-xl text-sm font-medium border transition-colors
                 ${!bank.available
@@ -151,6 +152,23 @@ function Upload() {
             >
               {bank.label}
               {!bank.available && <span className="ml-1 text-xs">(준비중)</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* 계좌 타입 선택 */}
+        <div className="flex gap-2">
+          {["입출금", "저축"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setSelectedType(type)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors
+          ${selectedType === type
+                  ? "bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 border-transparent"
+                  : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400"
+                }`}
+            >
+              {type}
             </button>
           ))}
         </div>

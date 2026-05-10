@@ -171,7 +171,15 @@ function Subscriptions() {
   };
 
   const removeSub = (id) => save(subscriptions.filter((s) => s.id !== id));
-  const totalMonthly = subscriptions.reduce((sum, s) => sum + toKRW(s.amount, s.currency) / (s.cycle || 1), 0);
+  const thisMonth = calMonth + 1;
+  const totalMonthly = subscriptions
+    .filter((s) => {
+      if (s.cycle === 1) return true; // 매월
+      if (s.cycle === 12) return s.month === thisMonth; // 연간: 해당 월만
+      // 3개월/6개월: 시작 월 기준으로 해당 월에 결제되는지 확인
+      return s.month ? (thisMonth - s.month) % s.cycle === 0 : true;
+    })
+    .reduce((sum, s) => sum + toKRW(s.amount, s.currency), 0);
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
@@ -215,7 +223,7 @@ function Subscriptions() {
 
       {/* 총 월 구독료 */}
       <div className="bg-gray-950 text-white rounded-2xl p-6 dark:bg-gray-900 dark:border dark:border-gray-800">
-        <p className="text-sm text-gray-400">월 평균 구독료</p>
+        <p className="text-sm text-gray-400">{calMonth + 1}월 구독료</p>
         <p className="text-4xl font-bold mt-2 tracking-tight">{formatKRW(totalMonthly)}</p>
         <p className="text-xs text-gray-500 mt-2">{subscriptions.length}개 서비스 구독 중</p>
       </div>
