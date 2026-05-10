@@ -540,7 +540,13 @@ export function DataProvider({ children }) {
   };
 
   // ── 계산 ───────────────────────────────────────
-  const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0)
+  const totalSavingsBalance = accounts
+    .filter((acc) => acc.type === "저축")
+    .reduce((sum, acc) => sum + acc.balance, 0);
+
+  const totalBankBalance = accounts
+    .filter((acc) => acc.type !== "저축" && acc.type !== "카드")
+    .reduce((sum, acc) => sum + acc.balance, 0)
     + (manualBalances.웰컴은행 || 0)
     + (manualBalances.사이다뱅크 || 0)
     + (manualBalances.하나멤버스 || 0);
@@ -580,7 +586,7 @@ export function DataProvider({ children }) {
     <DataContext.Provider value={{
       transactions, accounts, isDemoMode,
       loadCSVFile, addTransactions, resetToDemo,
-      totalBankBalance, thisMonthIncome, thisMonthExpense, totalInvestmentBalance,
+      totalBankBalance, totalSavingsBalance, thisMonthIncome, thisMonthExpense, totalInvestmentBalance,
       holdings, setHoldings, prices, setPrices,
       monthlyGoal, setMonthlyGoal,
       manualBalances, setManualBalances,
