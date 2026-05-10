@@ -238,7 +238,12 @@ function Dashboard() {
 
         const categorySpending = Object.entries(
           transactions
-            .filter((t) => t.amount < 0 && t.category !== "이체")
+            .filter((t) =>
+              t.amount < 0 &&
+              t.category !== "이체" &&
+              t.date >= firstDay &&
+              t.date <= lastDay
+            )
             .reduce((acc, t) => {
               acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
               return acc;
