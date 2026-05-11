@@ -48,7 +48,7 @@ function Investments() {
       const isKorean = /^\d+$/.test(code) || /^[A-Z0-9]{6,}$/.test(code);
       const symbol = isKorean ? `${code}.KS` : code;
       const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
       const res = await fetch(proxyUrl);
       const data = await res.json();
       const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
@@ -62,7 +62,7 @@ function Investments() {
   const fetchExchangeRate = async () => {
     try {
       const url = "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X";
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
       const res = await fetch(proxyUrl);
       const data = await res.json();
       const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
@@ -86,7 +86,7 @@ function Investments() {
       Object.entries(symbols).map(async ([name, symbol]) => {
         try {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
           const res = await fetch(proxyUrl);
           const data = await res.json();
           const meta = data?.chart?.result?.[0]?.meta;
