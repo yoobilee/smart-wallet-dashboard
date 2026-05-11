@@ -531,13 +531,23 @@ export function DataProvider({ children }) {
         });
       }
 
-      alert(`업데이트 완료!\n신한은행 잔액: ${shinhanBalance.toLocaleString("ko-KR")}원\n신한은행 거래내역: ${parsedShinhan.length}건\n현대카드: ${parsedCard.length}건`);
+      if (!silent) {
+        alert(`업데이트 완료!\n신한은행 잔액: ${shinhanBalance.toLocaleString("ko-KR")}원\n신한은행 거래내역: ${parsedShinhan.length}건\n현대카드: ${parsedCard.length}건`);
+      }
 
     } catch (err) {
       console.error("CODEF API 오류:", err);
-      alert("CODEF API 연결 실패. 백엔드 서버가 실행 중인지 확인해주세요.");
+      if (!silent) {
+        alert("CODEF API 연결 실패. 백엔드 서버가 실행 중인지 확인해주세요.");
+      }
     }
   };
+
+  useEffect(() => {
+    if (!isDemoMode) {
+      fetchFromCodef(true);
+    }
+  }, []);
 
   // ── 계산 ───────────────────────────────────────
   const totalSavingsBalance = accounts
