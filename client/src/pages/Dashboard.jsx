@@ -29,14 +29,14 @@ const categoryColor = {
 };
 
 const bankFavicons = {
-  신한은행: "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
-  카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
-  토스뱅크: "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
-  현대카드: "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
-  NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
-  카카오페이: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
-  우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
-  케이뱅크: "https://www.google.com/s2/favicons?domain=kbanknow.com&sz=32",
+  신한은행: "https://bank.shinhan.com/favicon.ico",
+  카카오뱅크: "https://www.kakaobank.com/favicon.ico",
+  토스뱅크: "https://www.tossbank.com/favicon.ico",
+  현대카드: "https://www.hyundaicard.com/favicon.ico",
+  카카오페이: "https://www.kakaopay.com/favicon.ico",
+  우리은행: "https://www.wooribank.com/favicon.ico",
+  케이뱅크: "https://www.kbanknow.com/favicon.ico",
+  NH투자증권: "https://www.nhqv.com/favicon.ico",
 };
 
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24", "#94a3b8", "#f87171"];
