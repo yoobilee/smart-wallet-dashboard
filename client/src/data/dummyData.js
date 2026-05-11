@@ -5,9 +5,12 @@
 
 // 계좌 목록
 export const accounts = [
-  { id: 1, bank: "카카오뱅크", type: "입출금", balance: 1240000, accountNumber: "3333-****-4521" },
-  { id: 2, bank: "국민은행",   type: "입출금", balance: 830000,  accountNumber: "****-**-1234-56" },
-  { id: 3, bank: "토스뱅크",  type: "저축",   balance: 3500000, accountNumber: "****-****-5678" },
+  { id: 1, bank: "신한은행",   type: "입출금", balance: 1240000, accountNumber: "****-****-4521" },
+  { id: 2, bank: "카카오뱅크", type: "입출금", balance: 830000,  accountNumber: "3333-****-6575" },
+  { id: 3, bank: "토스뱅크",   type: "입출금", balance: 120000,  accountNumber: "****-****-5678" },
+  { id: 4, bank: "우리은행",   type: "저축",   balance: 3500000, accountNumber: "****-****-1234" },
+  { id: 5, bank: "케이뱅크",   type: "입출금", balance: 200000,  accountNumber: "****-****-9012" },
+  { id: 6, bank: "현대카드",   type: "카드",   balance: 0,       accountNumber: "****-****-621*" },
 ];
 
 // 투자(증권) 계좌 - 실제 사용 불가 금액
@@ -24,16 +27,16 @@ export const cards = [
 
 // 최근 거래 내역
 export const transactions = [
-  { id: 1,  date: "2026-04-28", description: "스타벅스",       category: "카페",   amount: -6500,   type: "카드",  card: "신한카드" },
-  { id: 2,  date: "2026-04-27", description: "월급",           category: "수입",   amount: 2400000, type: "입금",  account: "카카오뱅크" },
-  { id: 3,  date: "2026-04-26", description: "쿠팡",           category: "쇼핑",   amount: -43200,  type: "카드",  card: "현대카드" },
-  { id: 4,  date: "2026-04-25", description: "GS25",           category: "편의점", amount: -4800,   type: "카드",  card: "신한카드" },
-  { id: 5,  date: "2026-04-24", description: "카카오페이증권", category: "투자",   amount: -100000, type: "이체",  account: "카카오뱅크" },
-  { id: 6,  date: "2026-04-23", description: "넷플릭스",       category: "구독",   amount: -17000,  type: "카드",  card: "신한카드" },
-  { id: 7,  date: "2026-04-22", description: "올리브영",       category: "쇼핑",   amount: -32000,  type: "카드",  card: "현대카드" },
-  { id: 8,  date: "2026-04-21", description: "버거킹",         category: "식비",   amount: -9500,   type: "카드",  card: "신한카드" },
-  { id: 9,  date: "2026-04-20", description: "교통카드 충전",  category: "교통",   amount: -50000,  type: "이체",  account: "카카오뱅크" },
-  { id: 10, date: "2026-04-19", description: "토스뱅크 이자",  category: "수입",   amount: 12000,   type: "입금",  account: "토스뱅크" },
+  { id: 1,  date: "2026-05-04", description: "스타벅스",       category: "카페",   amount: -6500,   type: "카드",  account: "현대카드"  },
+  { id: 2,  date: "2026-05-03", description: "월급",           category: "수입",   amount: 2400000, type: "입금",  account: "카카오뱅크" },
+  { id: 3,  date: "2026-05-02", description: "쿠팡",           category: "쇼핑",   amount: -43200,  type: "카드",  account: "현대카드"  },
+  { id: 4,  date: "2026-05-01", description: "GS25",           category: "편의점", amount: -4800,   type: "카드",  account: "현대카드"  },
+  { id: 5,  date: "2026-04-29", description: "카카오페이증권", category: "투자",   amount: -100000, type: "이체",  account: "카카오뱅크" },
+  { id: 6,  date: "2026-04-28", description: "넷플릭스",       category: "구독",   amount: -17000,  type: "카드",  account: "현대카드"  },
+  { id: 7,  date: "2026-04-27", description: "올리브영",       category: "쇼핑",   amount: -32000,  type: "카드",  account: "현대카드"  },
+  { id: 8,  date: "2026-04-26", description: "버거킹",         category: "식비",   amount: -9500,   type: "카드",  account: "현대카드"  },
+  { id: 9,  date: "2026-04-25", description: "교통카드 충전",  category: "교통",   amount: -50000,  type: "이체",  account: "카카오뱅크" },
+  { id: 10, date: "2026-04-24", description: "토스뱅크 이자",  category: "수입",   amount: 12000,   type: "입금",  account: "토스뱅크"  },
 ];
 
 // =============================================
