@@ -13,7 +13,7 @@ const getCodefEndDate = () => {
   const now = new Date();
   return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
 };
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const CATEGORY_KEYWORDS = {
   카페: ["스타벅스", "커피", "카페", "이디야", "빽다방", "메가커피", "투썸", "할리스", "폴바셋", "커피빈", "엔젤리너스", "뚜레쥬르", "파리바게뜨", "던킨", "논오프", "공차", "더벤티", "매머드커피", "블루보틀", "디저트", "베이커리", "하이오커피", "빙수", "케이크"],
