@@ -138,7 +138,7 @@ function Subscriptions() {
         Object.entries(symbols).map(async ([code, symbol]) => {
           try {
             const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
             const res = await fetch(proxyUrl);
             const data = await res.json();
             const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
