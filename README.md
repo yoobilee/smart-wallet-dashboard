@@ -12,6 +12,13 @@
 
 > 백엔드(Node.js/Express, CODEF API 연동)는 AI의 도움을 받아 구현했습니다.
 
+## 🔗 배포
+
+- **프론트엔드**: [Vercel](https://smart-wallet-dashboard-omega.vercel.app)
+- **백엔드**: [Render](https://smart-wallet-dashboard-server.onrender.com)
+
+> ⚠️ 백엔드는 Render 무료 플랜으로 운영 중입니다. 15분 이상 요청이 없으면 슬립 모드로 전환되어 첫 요청 시 50초 이상 지연될 수 있습니다.
+
 ## ✨ 주요 기능
 
 - 📊 **Dashboard** - 총 자산(가용/저축/투자 분리), 이번 달 수입/지출, 월별 추이 차트, 지출 목표 게이지
@@ -58,12 +65,16 @@
 - [x] 수동 잔고 입력 기능 (은행/투자 예수금/페이)
 - [x] 이번 달 지출 목표 게이지
 - [x] Transactions 날짜 범위/카테고리/수입출 필터
-- [x] Vercel 배포
 - [x] 백엔드 서버 (Node.js + Express)
 - [x] CODEF API 신한은행 자동 연동
 - [x] CODEF API 현대카드 자동 연동
+- [x] 앱 시작 시 CODEF 자동 갱신
 - [x] 월별 수입/지출 추이 차트
 - [x] 구독 관리 페이지 (캘린더, 다국가 통화, 결제 주기)
 - [x] 다크모드 전환 transition 개선
-- [ ] 카카오뱅크/토스뱅크 CODEF 연동 (웹서비스 미지원으로 보류)
+- [x] Render 백엔드 배포
+- [x] Vercel 프론트엔드 배포
+- [ ] 더미 데이터 갱신
+- [ ] Accounts 페이지 파비콘 추가
+- [ ] Sidebar 모드 표시 개선
 - [ ] 네이버페이/카카오페이 거래내역 자동 동기화 (현실적 제약으로 보류)
