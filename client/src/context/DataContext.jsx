@@ -420,7 +420,11 @@ export function DataProvider({ children }) {
   const resetToDemo = () => { setRealTransactions([]); setRealAccounts([]); setIsDemoMode(true); };
 
   // ── CODEF API 연동 ─────────────────────────────
-  const fetchFromCodef = async () => {
+  const [isFetching, setIsFetching] = useState(false);
+
+  const fetchFromCodef = async (silent = false) => {
+    if (isFetching) return;
+    setIsFetching(true);
     try {
       // 1. 신한은행 계좌 조회
       const accountData = await codefPost("/api/accounts", {
@@ -429,14 +433,14 @@ export function DataProvider({ children }) {
       });
 
       if (accountData.result?.code !== "CF-00000") {
-        alert(`CODEF 계좌 오류: ${accountData.result?.message}`);
+        if (!silent) alert(`CODEF 계좌 오류: ${accountData.result?.message}`);
         return;
       }
 
       const depositAccounts = accountData.data?.resDepositTrust || [];
       const mainAccount = depositAccounts[0];
 
-      if (!mainAccount) { alert("신한은행 입출금 계좌를 찾을 수 없어요."); return; }
+      if (!mainAccount) { if (!silent) alert("신한은행 입출금 계좌를 찾을 수 없어요."); return; }
 
       // 신한은행 잔액 업데이트
       const shinhanBalance = parseInt(mainAccount.resAccountBalance || "0");
@@ -457,7 +461,7 @@ export function DataProvider({ children }) {
       });
 
       if (txData.result?.code !== "CF-00000") {
-        alert(`CODEF 거래내역 오류: ${txData.result?.message}`);
+        if (!silent) alert(`CODEF 거래내역 오류: ${txData.result?.message}`);
         return;
       }
 
@@ -540,6 +544,8 @@ export function DataProvider({ children }) {
       if (!silent) {
         alert("CODEF API 연결 실패. 백엔드 서버가 실행 중인지 확인해주세요.");
       }
+    } finally {
+      setIsFetching(false);
     }
   };
 
