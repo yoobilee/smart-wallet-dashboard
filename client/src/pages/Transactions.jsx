@@ -33,6 +33,8 @@ const bankFavicons = {
   우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
   케이뱅크: "https://www.google.com/s2/favicons?domain=kbanknow.com&sz=32",
   NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
+  네이버페이: "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
+  "카카오페이 머니": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
 };
 
 const sortOptions = [

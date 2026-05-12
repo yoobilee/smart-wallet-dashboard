@@ -1,9 +1,10 @@
 // =============================================
 // Accounts 페이지 - 계좌 및 카드 목록
-// 다크모드 적용
 // =============================================
 
 import { useData } from "../context/DataContext";
+
+const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
 
 const bankFavicons = {
   신한은행: "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
@@ -13,15 +14,38 @@ const bankFavicons = {
   카카오페이: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
   우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
   케이뱅크: "https://www.google.com/s2/favicons?domain=kbanknow.com&sz=32",
-  NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
   네이버페이: "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
-  카카오페이머니: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
+  "카카오페이 머니": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
 };
 
-const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
+const investmentFavicons = {
+  "토스증권": "https://www.google.com/s2/favicons?domain=toss.im&sz=32",
+  "카카오페이": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
+  "카카오페이 증권": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
+};
+
+// ── 파비콘 컴포넌트 ──────────────────────────────
+function FaviconIcon({ src, name }) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        className="w-4 h-4 rounded-sm flex-shrink-0"
+        onError={(e) => e.target.style.display = "none"}
+      />
+    );
+  }
+  return (
+    <div className="w-4 h-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+      <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: "8px", fontWeight: "600" }}>
+        {name?.[0] || "?"}
+      </span>
+    </div>
+  );
+}
 
 function Accounts() {
-  // DataContext에서 현재 모드에 맞는 계좌 정보 가져오기
   const { accounts, holdings, prices, transactions, manualBalances } = useData();
 
   // 계좌별 투자 총액 계산
@@ -31,7 +55,7 @@ function Accounts() {
     return acc;
   }, {});
 
-  // 투자 계좌 목록 (계좌명 중복 제거) + 예수금 포함
+  // 투자 계좌 목록 + 예수금 포함
   const investmentAccounts = [...new Set(holdings.map((h) => h.account))].map((name) => ({
     id: name,
     platform: name,
@@ -41,12 +65,19 @@ function Accounts() {
           name === "유안타" ? (manualBalances.유안타 || 0) : 0
     ),
   }));
-  // 수동 입력 투자 계좌 (종목 없이 예수금만 있는 경우)
+
+  // 수동 입력 투자 계좌
   const manualInvestmentAccounts = [
     ["토스증권", "토스증권"],
     ["카카오페이증권", "카카오페이 증권"],
   ].filter(([key]) => manualBalances[key] > 0 && !holdings.some((h) => h.account === key))
     .map(([key, label]) => ({ id: key, platform: label, balance: manualBalances[key] }));
+
+  // 이번 달 범위
+  const now = new Date();
+  const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
 
@@ -59,13 +90,10 @@ function Accounts() {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">은행 계좌</h2>
         <div className="space-y-1">
-          {/* CSV 연동 계좌 */}
           {accounts.filter((acc) => acc.type !== "카드" && acc.type !== "저축").map((acc) => (
             <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div className="flex items-center gap-3">
-                {bankFavicons[acc.bank] && (
-                  <img src={bankFavicons[acc.bank]} alt={acc.bank} className="w-4 h-4 rounded-sm flex-shrink-0" onError={(e) => e.target.style.display = "none"} />
-                )}
+                <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
                   <p className="text-xs text-gray-400">{acc.type} · {acc.accountNumber}</p>
@@ -80,9 +108,12 @@ function Accounts() {
             .filter(([key]) => manualBalances[key] > 0)
             .map(([key, label]) => (
               <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
-                <div>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
-                  <p className="text-xs text-gray-400">입출금 · 수동 입력</p>
+                <div className="flex items-center gap-3">
+                  <FaviconIcon src={bankFavicons[label]} name={label} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
+                    <p className="text-xs text-gray-400">입출금 · 수동 입력</p>
+                  </div>
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatKRW(manualBalances[key])}</p>
               </div>
@@ -98,9 +129,12 @@ function Accounts() {
           <div className="space-y-1">
             {accounts.filter((acc) => acc.type === "저축").map((acc) => (
               <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
-                <div>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
-                  <p className="text-xs text-gray-400">저축 · {acc.accountNumber}</p>
+                <div className="flex items-center gap-3">
+                  <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
+                    <p className="text-xs text-gray-400">저축 · {acc.accountNumber}</p>
+                  </div>
                 </div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatKRW(acc.balance)}</p>
               </div>
@@ -116,9 +150,12 @@ function Accounts() {
           {[...investmentAccounts, ...manualInvestmentAccounts].length > 0 ? (
             [...investmentAccounts, ...manualInvestmentAccounts].map((inv) => (
               <div key={inv.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
-                <div>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{inv.platform}</p>
-                  <p className="text-xs text-gray-400">NH투자증권 · 실시간 시세</p>
+                <div className="flex items-center gap-3">
+                  <FaviconIcon src={investmentFavicons[inv.platform]} name={inv.platform} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{inv.platform}</p>
+                    <p className="text-xs text-gray-400">실시간 시세</p>
+                  </div>
                 </div>
                 <p className="text-sm font-semibold text-lime-500">
                   {inv.balance > 0 ? formatKRW(inv.balance) : "조회 중..."}
@@ -137,24 +174,17 @@ function Accounts() {
         <div className="space-y-1">
           {accounts.filter((acc) => acc.type === "카드").length > 0 ? (
             accounts.filter((acc) => acc.type === "카드").map((acc) => {
-              const now = new Date();
-              const firstDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-              const lastDay = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
-
               const thisMonthSpending = transactions
-                .filter((t) =>
-                  t.account === acc.bank &&
-                  t.amount < 0 &&
-                  t.date >= firstDay &&
-                  t.date <= lastDay
-                )
+                .filter((t) => t.account === acc.bank && t.amount < 0 && t.date >= firstDay && t.date <= lastDay)
                 .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
               return (
                 <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
-                    <p className="text-xs text-gray-400">카드</p>
+                  <div className="flex items-center gap-3">
+                    <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
+                      <p className="text-xs text-gray-400">카드</p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-rose-500">-{formatKRW(thisMonthSpending)}</p>
@@ -174,20 +204,22 @@ function Accounts() {
         <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">페이</h2>
           <div className="space-y-1">
-            {[
-              ["네이버페이", "네이버페이"],
-              ["카카오페이머니", "카카오페이 머니"],
-            ].filter(([key]) => manualBalances[key] > 0).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
-                <div>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
-                  <p className="text-xs text-gray-400">페이머니</p>
+            {[["네이버페이", "네이버페이"], ["카카오페이머니", "카카오페이 머니"]]
+              .filter(([key]) => manualBalances[key] > 0)
+              .map(([key, label]) => (
+                <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
+                  <div className="flex items-center gap-3">
+                    <FaviconIcon src={bankFavicons[label]} name={label} />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
+                      <p className="text-xs text-gray-400">페이머니</p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {formatKRW(manualBalances[key])}
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  {formatKRW(manualBalances[key])}
-                </p>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}
