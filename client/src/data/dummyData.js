@@ -97,16 +97,3 @@ export const transactions = [
 export const totalCardSpending = transactions
   .filter((t) => t.account === "현대카드" && t.amount < 0)
   .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-export const totalBankBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
-export const totalInvestmentBalance = investments.reduce((sum, inv) => sum + inv.balance, 0);
-export const availableBalance = totalBankBalance;
-export const totalAssets = totalBankBalance + totalInvestmentBalance;
-
-export const thisMonthIncome = transactions
-  .filter((t) => t.amount > 0 && t.date >= "2026-05-01")
-  .reduce((sum, t) => sum + t.amount, 0);
-
-export const thisMonthExpense = transactions
-  .filter((t) => t.amount < 0 && t.category !== "투자" && t.category !== "이체" && t.date >= "2026-05-01")
-  .reduce((sum, t) => sum + t.amount, 0);

@@ -14,7 +14,7 @@ const bankOptions = [
 ];
 
 function Upload() {
-  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal, manualBalances, setManualBalances, fetchFromCodef } = useData();
+  const { transactions, isDemoMode, loadCSVFile, addTransactions, resetToDemo, monthlyGoal, setMonthlyGoal, manualBalances, setManualBalances, fetchFromCodef, isFetching } = useData();
 
   // 목표 입력 상태
   const [goalInput, setGoalInput] = useState(monthlyGoal > 0 ? monthlyGoal.toString() : "");
@@ -121,9 +121,10 @@ function Upload() {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchFromCodef}
-            className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors"
+            disabled={isFetching}
+            className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors disabled:opacity-50"
           >
-            계좌 자동 연동
+            {isFetching ? "연동 중..." : "계좌 자동 연동"}
           </button>
         </div>
       </div>

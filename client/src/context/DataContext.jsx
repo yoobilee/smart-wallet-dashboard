@@ -31,12 +31,7 @@ const CATEGORY_KEYWORDS = {
 // ── 순수 함수 ──────────────────────────────────
 const categorize = (description, amount) => {
   const d = description || "";
-  if (amount > 0) {
-    if (d.includes("급여") || d.includes("월급")) return "수입";
-    if (d.includes("이자")) return "수입";
-    if (d.includes("컴즈")) return "수입";
-    return "수입";
-  }
+  if (amount > 0) return "수입";
   for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (keywords.some((k) => d.includes(k))) return category;
   }
@@ -606,7 +601,7 @@ export function DataProvider({ children }) {
       holdings, setHoldings, prices, setPrices,
       monthlyGoal, setMonthlyGoal,
       manualBalances, setManualBalances,
-      fetchFromCodef,
+      fetchFromCodef,isFetching,
     }}>
       {children}
     </DataContext.Provider>
