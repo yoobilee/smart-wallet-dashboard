@@ -9,6 +9,7 @@
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)
+![Recharts](https://img.shields.io/badge/Recharts-22B5BF?style=flat-square&logo=recharts&logoColor=white)
 
 > 백엔드(Node.js/Express, CODEF API 연동)는 AI의 도움을 받아 구현했습니다.
 
@@ -74,7 +75,14 @@
 - [x] 다크모드 전환 transition 개선
 - [x] Render 백엔드 배포
 - [x] Vercel 프론트엔드 배포
-- [ ] 더미 데이터 갱신
-- [ ] Accounts 페이지 파비콘 추가
-- [ ] Sidebar 모드 표시 개선
+- [x] 더미 데이터 갱신
+- [x] Accounts 페이지 파비콘 추가
+- [x] Sidebar 모드 표시 개선
+- [x] 코드 리팩토링 (constants.js, utils.js 분리)
+- [x] Transactions 날짜 필터 버그 수정
+- [x] CODEF 연동 중 버튼 비활성화 처리
 - [ ] 네이버페이/카카오페이 거래내역 자동 동기화 (현실적 제약으로 보류)
+
+## 👤 Developer
+
+Developed by **yoobi lee**
