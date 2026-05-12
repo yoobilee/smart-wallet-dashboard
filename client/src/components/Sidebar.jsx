@@ -1,9 +1,5 @@
-// =============================================
-// Sidebar 컴포넌트 - 왼쪽 네비게이션 메뉴
-// 다크모드 토글 버튼 추가
-// =============================================
-
 import { LayoutDashboard, Wallet, ArrowLeftRight, Upload, Sun, Moon, TrendingUp, CalendarClock } from "lucide-react";
+import { useData } from "../context/DataContext";
 
 const navItems = [
   { label: "Overview",      key: "dashboard",     icon: LayoutDashboard },
@@ -15,6 +11,8 @@ const navItems = [
 ];
 
 function Sidebar({ activePage, onNavigate, darkMode, onToggleDark }) {
+  const { isDemoMode } = useData();
+
   return (
     <aside className="w-48 min-h-screen bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col px-3 py-8">
 
@@ -61,10 +59,10 @@ function Sidebar({ activePage, onNavigate, darkMode, onToggleDark }) {
           }
         </button>
 
-        {/* Demo Mode 표시 */}
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-lime-400" />
-          Demo Mode
+        {/* 모드 표시 */}
+        <div className={`flex items-center gap-2 text-xs ${isDemoMode ? "text-gray-400" : "text-lime-600 dark:text-lime-400"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isDemoMode ? "bg-gray-400" : "bg-lime-400"}`} />
+          {isDemoMode ? "Demo Mode" : "Live Mode"}
         </div>
 
       </div>
