@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useData } from "../context/DataContext";
+import { formatKRW } from "../utils";
 
 // 초기 보유 종목 (캡쳐에서 확인한 데이터)
 const initialHoldings = [
@@ -22,9 +23,6 @@ const initialHoldings = [
   { id: 9, account: "NH ISA", name: "TIGER 미국배당다우존스", code: "458730", qty: 73, avgPrice: 14440 },
   { id: 10, account: "NH ISA", name: "KODEX CD금리액티브", code: "459580", qty: 1, avgPrice: 1074862 },
 ];
-
-// 숫자를 원화 형식으로 변환
-const formatKRW = (amount) => Math.abs(amount).toLocaleString("ko-KR") + "원";
 
 function Investments() {
   const { holdings, setHoldings, prices, setPrices } = useData();

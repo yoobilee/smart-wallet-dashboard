@@ -9,37 +9,8 @@ import {
   totalCardSpending as dummyCardSpending,
 } from "../data/dummyData";
 import { useData } from "../context/DataContext";
-
-const formatKRW = (amount) => Math.round(Math.abs(amount)).toLocaleString("ko-KR") + "원";
-
-const categoryColor = {
-  카페: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-  쇼핑: "bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400",
-  편의점: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  투자: "bg-lime-100 text-lime-600 dark:bg-lime-900/30 dark:text-lime-400",
-  구독: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  식비: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  교통: "bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400",
-  수입: "bg-lime-100 text-lime-700 dark:bg-lime-900/30 dark:text-lime-400",
-  이체: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-  의료: "bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400",
-  기타: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-  생활: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
-  지출이체: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-};
-
-const bankFavicons = {
-  신한은행: "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
-  카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
-  토스뱅크: "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
-  현대카드: "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
-  카카오페이: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
-  우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
-  케이뱅크: "https://www.google.com/s2/favicons?domain=kbanknow.com&sz=32",
-  NH투자증권: "https://www.google.com/s2/favicons?domain=nhqv.com&sz=32",
-  네이버페이: "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
-  "카카오페이 머니": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
-};
+import { BANK_FAVICONS, CATEGORY_COLOR } from "../constants";
+import { formatKRW } from "../utils";
 
 const CHART_COLORS = ["#a3e635", "#f472b6", "#fb923c", "#22d3ee", "#a78bfa", "#4ade80", "#fbbf24", "#94a3b8", "#f87171"];
 
@@ -62,7 +33,6 @@ function Dashboard() {
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   const totalAssets = totalBankBalance + totalSavingsBalance + totalInvestmentBalance;
-  const availableBalance = totalBankBalance;
   const investmentRatio = totalAssets > 0 ? (totalInvestmentBalance / totalAssets) * 100 : 0;
 
   // 도넛 차트 데이터 (지출 카테고리별)
@@ -374,15 +344,15 @@ function Dashboard() {
             <div key={t.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div className="flex items-center gap-3">
                 {/* 은행 로고 */}
-                {t.account && bankFavicons[t.account] && (
+                {t.account && BANK_FAVICONS[t.account] && (
                   <img
-                    src={bankFavicons[t.account]}
+                    src={BANK_FAVICONS[t.account]}
                     alt={t.account}
                     className="w-4 h-4 rounded-sm flex-shrink-0"
                     onError={(e) => e.target.style.display = "none"}
                   />
                 )}
-                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${categoryColor[t.category] || "bg-gray-100 text-gray-600"}`}>
+                <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${CATEGORY_COLOR[t.category] || "bg-gray-100 text-gray-600"}`}>
                   {t.category}
                 </span>
                 <div>

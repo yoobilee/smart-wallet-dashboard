@@ -3,20 +3,8 @@
 // =============================================
 
 import { useData } from "../context/DataContext";
-
-const formatKRW = (amount) => amount.toLocaleString("ko-KR") + "원";
-
-const bankFavicons = {
-  신한은행: "https://www.google.com/s2/favicons?domain=bank.shinhan.com&sz=32",
-  카카오뱅크: "https://www.google.com/s2/favicons?domain=kakaobank.com&sz=32",
-  토스뱅크: "https://www.google.com/s2/favicons?domain=tossbank.com&sz=32",
-  현대카드: "https://www.google.com/s2/favicons?domain=hyundaicard.com&sz=32",
-  카카오페이: "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
-  우리은행: "https://www.google.com/s2/favicons?domain=wooribank.com&sz=32",
-  케이뱅크: "https://www.google.com/s2/favicons?domain=kbanknow.com&sz=32",
-  네이버페이: "https://www.google.com/s2/favicons?domain=naver.com&sz=32",
-  "카카오페이 머니": "https://www.google.com/s2/favicons?domain=kakaopay.com&sz=32",
-};
+import { BANK_FAVICONS, CATEGORY_COLOR } from "../constants";
+import { formatKRW } from "../utils";
 
 const investmentFavicons = {
   "토스증권": "https://www.google.com/s2/favicons?domain=toss.im&sz=32",
@@ -93,7 +81,7 @@ function Accounts() {
           {accounts.filter((acc) => acc.type !== "카드" && acc.type !== "저축").map((acc) => (
             <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
               <div className="flex items-center gap-3">
-                <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
+                <FaviconIcon src={BANK_FAVICONS[acc.bank]} name={acc.bank} />
                 <div>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
                   <p className="text-xs text-gray-400">{acc.type} · {acc.accountNumber}</p>
@@ -109,7 +97,7 @@ function Accounts() {
             .map(([key, label]) => (
               <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                 <div className="flex items-center gap-3">
-                  <FaviconIcon src={bankFavicons[label]} name={label} />
+                  <FaviconIcon src={BANK_FAVICONS[label]} name={label} />
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
                     <p className="text-xs text-gray-400">입출금 · 수동 입력</p>
@@ -130,7 +118,7 @@ function Accounts() {
             {accounts.filter((acc) => acc.type === "저축").map((acc) => (
               <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                 <div className="flex items-center gap-3">
-                  <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
+                  <FaviconIcon src={BANK_FAVICONS[acc.bank]} name={acc.bank} />
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
                     <p className="text-xs text-gray-400">저축 · {acc.accountNumber}</p>
@@ -180,7 +168,7 @@ function Accounts() {
               return (
                 <div key={acc.id} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                   <div className="flex items-center gap-3">
-                    <FaviconIcon src={bankFavicons[acc.bank]} name={acc.bank} />
+                    <FaviconIcon src={BANK_FAVICONS[acc.bank]} name={acc.bank} />
                     <div>
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{acc.bank}</p>
                       <p className="text-xs text-gray-400">카드</p>
@@ -209,7 +197,7 @@ function Accounts() {
               .map(([key, label]) => (
                 <div key={key} className="flex items-center justify-between px-2 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-default">
                   <div className="flex items-center gap-3">
-                    <FaviconIcon src={bankFavicons[label]} name={label} />
+                    <FaviconIcon src={BANK_FAVICONS[label]} name={label} />
                     <div>
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{label}</p>
                       <p className="text-xs text-gray-400">페이머니</p>

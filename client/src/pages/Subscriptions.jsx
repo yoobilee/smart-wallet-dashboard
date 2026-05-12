@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { formatKRW } from "../utils";
 
 const CATEGORY_OPTIONS = ["엔터테인먼트", "쇼핑", "음악", "클라우드", "업무", "게임", "기타"];
 
@@ -41,7 +42,6 @@ const getFavicon = (name) => {
   return null;
 };
 
-const formatKRW = (amount) => Math.round(amount).toLocaleString("ko-KR") + "원";
 const currencySymbol = (code) => ({ KRW: "₩", USD: "$", INR: "₹", JPY: "¥", EUR: "€" }[code] || "");
 
 // ── 커스텀 드롭다운 ──────────────────────────────

@@ -1,0 +1,1 @@
+export const formatKRW = (amount) => Math.round(Math.abs(amount)).toLocaleString("ko-KR") + "원";
