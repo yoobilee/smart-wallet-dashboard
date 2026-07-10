@@ -38,7 +38,8 @@ app.post("/api/accounts", async (req, res) => {
     const result = await getBankAccounts(connectedId, organization);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("/api/accounts 에러:", err.message || err);
+    res.status(500).json({ error: err.message || JSON.stringify(err) });
   }
 });
 

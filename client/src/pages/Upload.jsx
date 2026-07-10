@@ -120,7 +120,7 @@ function Upload() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchFromCodef}
+            onClick={() => fetchFromCodef()}
             disabled={isFetching}
             className="text-xs font-medium px-4 py-2.5 rounded-xl bg-gray-950 dark:bg-lime-400 text-white dark:text-gray-950 transition-colors disabled:opacity-50"
           >

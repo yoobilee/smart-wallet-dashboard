@@ -4,6 +4,7 @@
 // =============================================
 
 const { EasyCodef, EasyCodefConstant, EasyCodefUtil } = require("easycodef-node");
+const { mockBankAccounts, mockTransactions, mockCardTransactions } = require("./mockData");
 
 // codef 인스턴스 생성 및 설정
 const codef = new EasyCodef();
@@ -13,11 +14,16 @@ codef.setClientInfoForDemo(
   process.env.CODEF_DEMO_CLIENT_SECRET
 );
 
-// 데모 승인 후 SERVICE_TYPE_DEMO로 변경 예정
+// CODEF 데모 서비스는 최초 1회, 1개월만 이용 가능해 만료됨.
+// 재계약(정식 전환) 전까지는 USE_MOCK_CODEF=true로 두고 Mock 응답을 사용.
+// 재계약 시 환경변수만 false로 바꾸면 아래 실제 연동 로직이 그대로 살아남.
+const USE_MOCK = process.env.USE_MOCK_CODEF === "true";
 const SERVICE_TYPE = EasyCodefConstant.SERVICE_TYPE_DEMO;
 
 // ── 계좌 목록 조회 ──────────────────────────
 const getBankAccounts = async (connectedId, organization) => {
+  if (USE_MOCK) return mockBankAccounts;
+
   const parameter = { connectedId, organization };
 
   const result = await codef.requestProduct(
@@ -31,6 +37,8 @@ const getBankAccounts = async (connectedId, organization) => {
 
 // ── 거래내역 조회 ──────────────────────────
 const getTransactions = async (connectedId, organization, account, startDate, endDate) => {
+  if (USE_MOCK) return mockTransactions;
+
   const parameter = {
     connectedId,
     organization,
@@ -94,6 +102,8 @@ const createCardAccount = async (organization, id, password, cardNo, cardPasswor
 
 // ── 카드 승인내역 조회 ──────────────────────────
 const getCardTransactions = async (connectedId, organization, startDate, endDate, cardNo, cardPassword) => {
+  if (USE_MOCK) return mockCardTransactions;
+
   const parameter = {
     connectedId,
     organization,
