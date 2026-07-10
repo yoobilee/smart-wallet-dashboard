@@ -5,6 +5,12 @@
 > 이 프로젝트는 Claude와의 대화를 통해 코드를 받아 구현했으며, 로직 검토도 Claude의 도움을 받았습니다.
 > 직접 수정한 부분은 주로 UI 스타일링과 문구이며, 기능 방향과 문제 해결 아이디어는 직접 제시했습니다.
 
+<p align="center">
+  <img src="./docs/images/overview.png" alt="Overview 대시보드 화면" width="420"/>
+  &nbsp;&nbsp;
+  <img src="./docs/images/investments.png" alt="Investments 화면 (실시간 시세)" width="420"/>
+</p>
+
 ## 왜 만들었나
 
 이직을 준비하는 기간 동안 수입이 없다 보니 자산 흐름을 매일 확인할 방법이 필요했습니다. 토스 같은
