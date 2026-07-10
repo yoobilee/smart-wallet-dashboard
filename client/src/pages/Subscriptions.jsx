@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { formatKRW } from "../utils";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 const CATEGORY_OPTIONS = ["엔터테인먼트", "쇼핑", "음악", "클라우드", "업무", "게임", "기타"];
 
 const CURRENCY_OPTIONS = [
@@ -137,9 +139,7 @@ function Subscriptions() {
       await Promise.all(
         Object.entries(symbols).map(async ([code, symbol]) => {
           try {
-            const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-            const res = await fetch(proxyUrl);
+            const res = await fetch(`${BACKEND_URL}/api/yahoo?symbol=${encodeURIComponent(symbol)}`);
             const data = await res.json();
             const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
             if (rate) newRates[code] = rate;

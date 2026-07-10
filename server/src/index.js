@@ -74,6 +74,34 @@ const result = await getCardTransactions(connectedId, organization, startDate, e
   }
 });
 
+// ── Yahoo Finance 시세/환율 프록시 ──────────────
+// 브라우저에서 직접 Yahoo Finance를 호출하면 CORS로 막히기 때문에
+// (예전엔 allorigins.win 같은 외부 프록시를 썼으나 해당 서비스가 불안정해짐)
+// 서버가 대신 호출해서 그대로 전달해준다. 서버-서버 통신은 CORS 제약이 없음.
+app.get("/api/yahoo", async (req, res) => {
+  try {
+    const { symbol } = req.query;
+    if (!symbol) {
+      return res.status(400).json({ error: "symbol 쿼리 파라미터가 필요합니다." });
+    }
+
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`;
+    const yahooRes = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+    });
+
+    if (!yahooRes.ok) {
+      return res.status(yahooRes.status).json({ error: `Yahoo Finance 응답 오류: ${yahooRes.status}` });
+    }
+
+    const data = await yahooRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error("/api/yahoo 에러:", err.message || err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── 서버 시작 ─────────────────────────────────
 app.listen(PORT, () => {
   console.log(`✅ 서버 실행 중: http://localhost:${PORT}`);

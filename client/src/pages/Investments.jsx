@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import { useData } from "../context/DataContext";
 import { formatKRW } from "../utils";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 // 초기 보유 종목 (캡쳐에서 확인한 데이터)
 const initialHoldings = [
   // CMA 계좌
@@ -39,15 +41,13 @@ function Investments() {
   const [exchangeRate, setExchangeRate] = useState(1450); // 기본값
   const [marketData, setMarketData] = useState({});
 
-  // Yahoo Finance API로 현재가 조회 (CORS 프록시 사용)
+  // Yahoo Finance API로 현재가 조회 (백엔드 프록시 경유)
   const fetchPrice = async (code) => {
     try {
       // 미국 주식(알파벳만)은 .KS 없이, 한국 주식은 .KS 붙이기
       const isKorean = /^\d+$/.test(code) || /^[A-Z0-9]{6,}$/.test(code);
       const symbol = isKorean ? `${code}.KS` : code;
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
+      const res = await fetch(`${BACKEND_URL}/api/yahoo?symbol=${encodeURIComponent(symbol)}`);
       const data = await res.json();
       const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
       return price || null;
@@ -59,9 +59,7 @@ function Investments() {
   // 달러/원 환율 조회
   const fetchExchangeRate = async () => {
     try {
-      const url = "https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X";
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
+      const res = await fetch(`${BACKEND_URL}/api/yahoo?symbol=USDKRW=X`);
       const data = await res.json();
       const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
       if (rate) setExchangeRate(rate);
@@ -83,9 +81,7 @@ function Investments() {
     await Promise.all(
       Object.entries(symbols).map(async ([name, symbol]) => {
         try {
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-          const res = await fetch(proxyUrl);
+          const res = await fetch(`${BACKEND_URL}/api/yahoo?symbol=${encodeURIComponent(symbol)}`);
           const data = await res.json();
           const meta = data?.chart?.result?.[0]?.meta;
           if (meta) {
